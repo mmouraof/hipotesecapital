@@ -1,19 +1,20 @@
-"""Módulo de coleta de indicadores fundamentalistas via API do Claude com web_fetch."""
+"""Módulo de coleta de indicadores fundamentalistas via OpenAI com web search."""
 
 import json
 import logging
 import os
 
-import anthropic
+from openai import OpenAI
 
 logger = logging.getLogger(__name__)
 
 
 def coletar_indicadores(ticker: str, nome_empresa: str) -> dict:
-    """Coleta indicadores fundamentalistas de um ativo via Claude web_fetch.
+    """Coleta indicadores fundamentalistas de um ativo via GPT-4o com web search.
 
-    Acessa o Investidor10 usando a ferramenta web_fetch do Claude para extrair
-    P/L, P/VP, ROE, Dividend Yield, Dívida Líquida/EBITDA, Margem Líquida e EV/EBITDA.
+    Usa a Responses API da OpenAI com a ferramenta web_search_preview para
+    extrair P/L, P/VP, ROE, Dividend Yield, Dívida Líquida/EBITDA, Margem
+    Líquida e EV/EBITDA do Investidor10.
 
     Args:
         ticker: Código do ativo (ex: "PRIO3").
@@ -23,40 +24,26 @@ def coletar_indicadores(ticker: str, nome_empresa: str) -> dict:
         Dicionário com os indicadores extraídos. Valores ausentes ficam como None.
         Retorna dicionário vazio se a coleta falhar.
     """
-    client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
+    client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 
     url = f"https://investidor10.com.br/acoes/{ticker.lower()}/"
 
     prompt = (
-        f"Acesse a página {url} e extraia APENAS os seguintes indicadores em formato "
+        f"Acesse {url} e extraia APENAS os seguintes indicadores em formato "
         "JSON puro (sem markdown, sem explicação): P/L, P/VP, ROE, Dividend Yield, "
         "Dívida Líquida/EBITDA, Margem Líquida, EV/EBITDA. "
         "Se algum não estiver disponível, use null."
     )
 
     try:
-        response = client.messages.create(
-            model="claude-sonnet-4-6",
-            max_tokens=1024,
-            messages=[{"role": "user", "content": prompt}],
-            tools=[
-                {
-                    "type": "web_fetch_20250910",
-                    "name": "web_fetch",
-                    "max_uses": 3,
-                }
-            ],
-            extra_headers={"anthropic-beta": "web-fetch-2025-09-10"},
+        response = client.responses.create(
+            model="gpt-4o",
+            tools=[{"type": "web_search_preview"}],
+            input=prompt,
         )
 
-        # Extrai o texto da resposta (último bloco de texto)
-        texto = ""
-        for block in response.content:
-            if block.type == "text":
-                texto = block.text
+        texto = response.output_text.strip()
 
-        # Remove possíveis marcações de código antes de parsear
-        texto = texto.strip()
         if texto.startswith("```"):
             texto = texto.split("```")[1]
             if texto.startswith("json"):
@@ -64,12 +51,12 @@ def coletar_indicadores(ticker: str, nome_empresa: str) -> dict:
             texto = texto.strip()
 
         indicadores = json.loads(texto)
-        logger.info("Indicadores coletados para %s: %s", ticker, list(indicadores.keys()))
+        logger.info("[%s] indicadores coletados", ticker)
         return indicadores
 
     except json.JSONDecodeError as e:
-        logger.warning("Falha ao parsear JSON dos indicadores de %s: %s", ticker, e)
+        logger.warning("[%s] falha ao parsear indicadores: %s", ticker, e)
         return {}
     except Exception as e:
-        logger.warning("Erro ao coletar indicadores de %s: %s", ticker, e)
+        logger.warning("[%s] erro na coleta de indicadores: %s", ticker, e)
         return {}

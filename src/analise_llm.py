@@ -99,12 +99,12 @@ def gerar_analise(
             texto = texto.strip()
 
         analise = json.loads(texto)
-        logger.info("Análise gerada para %s", ticker)
+        logger.info("[%s] análise gerada", ticker)
         return analise
 
     except json.JSONDecodeError as e:
-        logger.warning("Falha ao parsear JSON da análise de %s: %s", ticker, e)
+        logger.warning("[%s] falha ao parsear análise: %s", ticker, e)
         return {"erro": f"Falha no parsing da resposta: {e}"}
     except Exception as e:
-        logger.warning("Erro ao gerar análise de %s: %s", ticker, e)
+        logger.warning("[%s] erro na análise: %s", ticker, e)
         return {"erro": str(e)}

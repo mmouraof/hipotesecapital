@@ -65,7 +65,7 @@ def processar_ativo(ticker: str, nome_empresa: str) -> dict:
     Returns:
         Dict com indicadores, noticias e analise do ativo.
     """
-    logger.info("Processando %s — %s", ticker, nome_empresa)
+    logger.info("[%s] iniciando", ticker)
 
     indicadores = coletar_indicadores(ticker, nome_empresa)
     noticias = coletar_noticias(ticker, nome_empresa)
@@ -85,11 +85,14 @@ def main() -> None:
     load_dotenv()
 
     if not os.environ.get("ANTHROPIC_API_KEY"):
-        logger.error("ANTHROPIC_API_KEY não encontrada. Configure o arquivo .env.")
+        logger.error("ANTHROPIC_API_KEY não encontrada — configure o .env")
+        sys.exit(1)
+    if not os.environ.get("OPENAI_API_KEY"):
+        logger.error("OPENAI_API_KEY não encontrada — configure o .env")
         sys.exit(1)
 
     ativos = carregar_ativos(ATIVOS_PATH)
-    logger.info("Iniciando briefing para %d ativos.", len(ativos))
+    logger.info("Iniciando briefing — %d ativos", len(ativos))
 
     inicio = time.time()
     resultados = {}
@@ -99,10 +102,9 @@ def main() -> None:
         try:
             resultados[ticker] = processar_ativo(ticker, nome_empresa)
         except Exception as e:
-            logger.error("Falha ao processar %s: %s", ticker, e)
+            logger.error("[%s] falha: %s", ticker, e)
             erros.append(ticker)
 
-    # Salva JSON com data de hoje
     hoje = date.today().isoformat()
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     json_path = OUTPUT_DIR / f"{hoje}.json"
@@ -111,20 +113,18 @@ def main() -> None:
 
     with open(json_path, "w", encoding="utf-8") as f:
         json.dump(payload, f, ensure_ascii=False, indent=2)
-    logger.info("Dados salvos em %s", json_path)
+    logger.info("JSON salvo: %s", json_path.name)
 
-    # Gera dashboard HTML
     gerar_dashboard(payload, str(TEMPLATE_PATH), str(DASHBOARD_OUTPUT))
 
-    # Resumo final
     duracao = time.time() - inicio
     ok = len(ativos) - len(erros)
     logger.info(
-        "Briefing concluído. %d/%d ativos processados em %.1fs.%s",
+        "Concluído — %d/%d ativos em %.1fs%s",
         ok,
         len(ativos),
         duracao,
-        f" Erros: {erros}" if erros else "",
+        f" | erros: {erros}" if erros else "",
     )
     print(f"\n✓ Dashboard gerado em: {DASHBOARD_OUTPUT}")
     webbrowser.open(DASHBOARD_OUTPUT.as_uri())

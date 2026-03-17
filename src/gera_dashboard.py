@@ -26,4 +26,4 @@ def gerar_dashboard(dados: dict, template_path: str, output_path: str) -> None:
     with open(output_path, "w", encoding="utf-8") as f:
         f.write(html)
 
-    logger.info("Dashboard gerado em %s", output_path)
+    logger.info("Dashboard gerado: %s", output_path)

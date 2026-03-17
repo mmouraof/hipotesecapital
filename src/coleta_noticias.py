@@ -33,7 +33,7 @@ def coletar_noticias(
         feed = feedparser.parse(url)
 
         if not feed.entries:
-            logger.warning("Feed vazio para %s (%s)", ticker, nome_empresa)
+            logger.warning("[%s] feed RSS vazio", ticker)
             return []
 
         noticias = []
@@ -60,9 +60,9 @@ def coletar_noticias(
         # Ordena por data decrescente (None vai para o fim)
         noticias.sort(key=lambda n: n["data_publicacao"] or "", reverse=True)
 
-        logger.info("%d notícias coletadas para %s", len(noticias[:max_noticias]), ticker)
+        logger.info("[%s] %d notícias coletadas", ticker, len(noticias[:max_noticias]))
         return noticias[:max_noticias]
 
     except Exception as e:
-        logger.warning("Erro ao coletar notícias de %s: %s", ticker, e)
+        logger.warning("[%s] erro na coleta de notícias: %s", ticker, e)
         return []
