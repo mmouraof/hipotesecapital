@@ -35,13 +35,19 @@ ANTHROPIC_API_KEY=sk-ant-sua-chave-aqui
 
 > **Segurança:** O arquivo `.env` está no `.gitignore` e nunca será commitado. Nunca compartilhe sua chave diretamente no código ou em commits.
 
-### Execução
+### Execução completa (coleta + análise + dashboard)
 
 ```bash
 python src/main.py
 ```
 
-O script coleta os dados, gera as análises via API e monta o dashboard com os resultados embutidos. Ao final, abra `dashboard/index.html` diretamente no navegador (duplo-clique ou arraste para o navegador). Nenhum servidor local é necessário.
+O script coleta os dados, gera as análises via API e monta o dashboard com os resultados embutidos em `dashboard/index.html`. Abra esse arquivo diretamente no navegador — nenhum servidor local é necessário.
+
+### Testar o dashboard sem rodar o pipeline
+
+Para visualizar o layout sem consumir a API, abra `dashboard/index_mock.html` diretamente no navegador. Ele contém dados fictícios de 3 ativos (PRIO3, ITUB4, SLCE3) já embutidos e funciona offline.
+
+> `index_mock.html` é gerado a partir do mesmo template, mas com o bloco mock ativo. Não edite `template.html` para isso — o template deve permanecer intacto para o pipeline de produção.
 
 ## Usando GitHub Codespaces
 
@@ -77,7 +83,8 @@ hipotese-capital/
 │   └── gera_dashboard.py       # Injeta dados no template HTML
 └── dashboard/
     ├── template.html           # Template com placeholder para dados
-    └── index.html              # HTML final gerado (autocontido)
+    ├── index_mock.html         # Versão com dados mock para testes (abrir no navegador)
+    └── index.html              # HTML final gerado pelo pipeline (autocontido)
 ```
 
 ### Fluxo de dados
