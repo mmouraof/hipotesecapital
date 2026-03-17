@@ -1,9 +1,11 @@
 """Orquestrador principal do briefing semanal da Hipótese Capital."""
 
+import http.server
 import json
 import logging
 import os
 import sys
+import threading
 import time
 import webbrowser
 from datetime import date
@@ -133,11 +135,31 @@ def main() -> None:
         duracao,
         f" | erros: {erros}" if erros else "",
     )
-    uri = DASHBOARD_OUTPUT.as_uri()
-    link = f"\033]8;;{uri}\033\\📄 Baixar dashboard (clique aqui)\033]8;;\033\\"
+    # Inicia servidor HTTP temporário para download
+    port = 8000
+    handler = http.server.SimpleHTTPRequestHandler
+    handler.log_message = lambda *a: None  # suprime logs do servidor
+
+    httpd = http.server.HTTPServer(("0.0.0.0", port), handler)
+    thread = threading.Thread(target=httpd.serve_forever, daemon=True)
+    thread.start()
+
+    # Constrói URL: Codespaces ou localhost
+    codespace = os.environ.get("CODESPACE_NAME")
+    if codespace:
+        base_url = f"https://{codespace}-{port}.preview.app.github.dev"
+    else:
+        base_url = f"http://localhost:{port}"
+        webbrowser.open(f"{base_url}/{DASHBOARD_OUTPUT.relative_to(ROOT)}")
+
+    url = f"{base_url}/{DASHBOARD_OUTPUT.relative_to(ROOT)}"
+    link = f"\033]8;;{url}\033\\📄 Baixar dashboard (clique aqui)\033]8;;\033\\"
+
     print(f"\n✓ Dashboard gerado em: {DASHBOARD_OUTPUT}")
     print(f"   {link}")
-    webbrowser.open(uri)
+    print("\n   Pressione Enter para encerrar o servidor...")
+    input()
+    httpd.shutdown()
 
 
 if __name__ == "__main__":
