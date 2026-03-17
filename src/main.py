@@ -71,10 +71,11 @@ def processar_ativo(ticker: str, nome_empresa: str) -> dict:
     noticias = coletar_noticias(ticker, nome_empresa)
     analise = gerar_analise(ticker, nome_empresa, indicadores, noticias)
 
-    # Injeta sentimento e justificativa nas notícias cruzando pelo título
-    classificadas = {n["titulo"]: n for n in analise.get("noticias_classificadas", [])}
-    for noticia in noticias:
-        match = classificadas.get(noticia["titulo"], {})
+    # Injeta sentimento e justificativa nas notícias por índice (mesma ordem do prompt)
+    classificadas = analise.get("noticias_classificadas", [])
+    logger.info("[%s] %d notícias classificadas pelo LLM", ticker, len(classificadas))
+    for i, noticia in enumerate(noticias):
+        match = classificadas[i] if i < len(classificadas) else {}
         noticia["sentimento"] = match.get("sentimento", "neutro")
         noticia["justificativa"] = match.get("justificativa", "")
 
