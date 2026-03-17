@@ -1,6 +1,6 @@
 .env
 __pycache__/
 *.pyc
-data/output/
-.vscode/
+data/output/*.json
+node_modules/
 test_api.py
