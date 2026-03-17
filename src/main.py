@@ -133,8 +133,11 @@ def main() -> None:
         duracao,
         f" | erros: {erros}" if erros else "",
     )
+    uri = DASHBOARD_OUTPUT.as_uri()
+    link = f"\033]8;;{uri}\033\\📄 Baixar dashboard (clique aqui)\033]8;;\033\\"
     print(f"\n✓ Dashboard gerado em: {DASHBOARD_OUTPUT}")
-    webbrowser.open(DASHBOARD_OUTPUT.as_uri())
+    print(f"   {link}")
+    webbrowser.open(uri)
 
 
 if __name__ == "__main__":
