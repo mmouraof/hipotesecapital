@@ -45,13 +45,7 @@
         ],
         "analise": {
           "resumo_negocio": "PRIO é uma operadora de petróleo focada em campos maduros offshore, com histórico de crescimento acelerado via aquisições e revitalização de ativos subexplorados.",
-          "indicadores_selecionados": {
-            "P/L": "6,2x",
-            "EV/EBITDA": "4,1x",
-            "ROE": "28%",
-            "Dívida Líquida/EBITDA": "0,4x"
-          },
-          "interpretacao_indicadores": "P/L de 6,2x e EV/EBITDA de 4,1x indicam valuação atrativa para o setor de E&P. ROE de 28% com baixa alavancagem (DN/EBITDA 0,4x) sinaliza excelente qualidade de alocação de capital.",
+          "interpretacao_indicadores": "P/L de 6,2x indica valuação atrativa para o setor de E&P. ROE de 28% com baixa alavancagem (DN/EBITDA 0,4x) sinaliza excelente qualidade de alocação de capital.",
           "perguntas_investigativas": [
             "Qual é o custo de extração por barril (lifting cost) e como ele evoluiu nos últimos 4 trimestres?",
             "Quais são os planos de hedge de preço do petróleo para 2025?",
@@ -76,12 +70,6 @@
         ],
         "analise": {
           "resumo_negocio": "Itaú Unibanco é o maior banco privado da América Latina, com operações diversificadas em varejo, atacado, seguros e gestão de patrimônio.",
-          "indicadores_selecionados": {
-            "ROE": "22%",
-            "P/VP": "2,1x",
-            "Dividend Yield": "3,4%",
-            "P/L": "9,1x"
-          },
           "interpretacao_indicadores": "ROE consistente de 22% com P/VP de 2,1x é premium justificável pela qualidade da franquia. Dividend Yield de 3,4% mais recompras reforçam a tese de retorno ao acionista.",
           "perguntas_investigativas": [
             "Como a inadimplência (NPL) evoluiu no segmento de crédito ao consumidor em 2024?",
@@ -108,13 +96,6 @@
         ],
         "analise": {
           "resumo_negocio": "SLC Agrícola é uma das maiores produtoras de grãos do Brasil, operando em modelo de arrendamento de terras com foco em soja, milho e algodão.",
-          "indicadores_selecionados": {
-            "Dívida Líquida/EBITDA": "1,8x",
-            "Dividend Yield": "4,1%",
-            "P/L": "7,8x",
-            "Margem Líquida": "14%",
-            "EV/EBITDA": "5,6x"
-          },
           "interpretacao_indicadores": "P/L de 7,8x e Dividend Yield de 4,1% são atrativos. A alavancagem de 1,8x DN/EBITDA merece monitoramento dado o ciclo de commodities, mas é administrável com o fluxo de caixa do negócio.",
           "perguntas_investigativas": [
             "Qual a estratégia de hedge cambial para a safra atual e como ela protege a margem?",
@@ -196,13 +177,13 @@
     const indicadores = d.indicadores || {};
     const noticias = d.noticias || [];
 
-    // Linhas da tabela de indicadores — selecionados pelo LLM
-    const indSelecionados = analise.indicadores_selecionados || {};
-    const indRows = Object.entries(indSelecionados).map(([k, v]) => `
+    // Linhas da tabela de indicadores — lista fixa coletada pela OpenAI
+    const indKeys = ["P/L", "P/VP", "ROE", "Dividend Yield", "Dívida Líquida/EBITDA", "Margem Líquida"];
+    const indRows = indKeys.map(k => `
       <tr class="border-t border-gray-100">
         <td class="py-2 pr-4 text-gray-500 text-sm">${k}</td>
-        <td class="py-2 text-sm font-medium">${fmt(v)}</td>
-      </tr>`).join("") || `<tr><td class="py-2 text-sm text-gray-400" colspan="2">Sem indicadores disponíveis.</td></tr>`;
+        <td class="py-2 text-sm font-medium">${fmt(indicadores[k])}</td>
+      </tr>`).join("");
 
     // Notícias com badges
     const noticiasHtml = noticias.length ? noticias.map(n => {

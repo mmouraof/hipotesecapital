@@ -1,11 +1,1 @@
 ASAI3|Assaí Atacadista
-RECV3|PetroReconcavo
-MOVI3|Movida
-BRKM5|Braskem
-HBSA3|Hidrovias do Brasil
-ITUB4|Itaú Unibanco
-BBDC4|Bradesco
-OPCT3|Oceanpact
-BRSR6|Banrisul
-PRIO3|PRIO
-SLCE3|SLC Agrícola

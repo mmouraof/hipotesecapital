@@ -26,11 +26,7 @@ Empresa: {nome_empresa}
 Responda EXCLUSIVAMENTE com um JSON puro (sem markdown, sem texto adicional) com a seguinte estrutura:
 {{
   "resumo_negocio": "parágrafo descrevendo o modelo de negócio e posição competitiva",
-  "indicadores_selecionados": {{
-    "Nome do Indicador": "valor exato da página",
-    "...": "selecione entre 4 e 6 indicadores que você julgue mais relevantes para avaliar este ativo sob a ótica de value investing; use os valores exatos recebidos"
-  }},
-  "interpretacao_indicadores": "parágrafo interpretando os indicadores selecionados sob a ótica de value investing",
+  "interpretacao_indicadores": "parágrafo interpretando os indicadores sob a ótica de value investing",
   "noticias_classificadas": [
     {{
       "titulo": "título EXATO da notícia, copiado da lista acima",
