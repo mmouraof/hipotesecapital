@@ -169,7 +169,11 @@ def selecionar_ativos(ativos_base: list[tuple[str, str]], caminho: Path) -> list
             print("\n  Ativos a processar:")
             for i, (t, n) in enumerate(ativos, 1):
                 print(f"    {i:2}. {t} | {n}")
-            confirmacao = input("\n  Digite S para confirmar e N para cancelar: ").strip().upper()
+            print(f"\n  (Sem resposta em {_TIMEOUT_INATIVIDADE}s, o relatório será gerado automaticamente.)")
+            conf_raw = _input_timeout("\n  Digite S para confirmar e N para cancelar: ", _TIMEOUT_INATIVIDADE)
+            confirmacao = conf_raw.strip().upper() if conf_raw is not None else "S"
+            if conf_raw is None:
+                print("  Tempo esgotado. Gerando relatório automaticamente...")
             if confirmacao == "S":
                 # Persiste a lista atualizada no arquivo
                 with open(caminho, "w", encoding="utf-8") as f:
