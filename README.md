@@ -45,6 +45,14 @@ python src/main.py
 
 O script coleta os dados, gera as análises via API e monta o dashboard em `dashboard/output/index.html`. Abra esse arquivo diretamente no navegador — nenhum servidor local é necessário. Ao final da execução, o arquivo é aberto automaticamente no navegador padrão.
 
+Antes de iniciar a coleta, o script exibe uma etapa interativa no terminal para revisar os ativos. Digite a letra do comando desejado e pressione Enter:
+
+- **A** — adicionar um ativo à lista (o terminal pedirá o ticker e o nome da empresa, um por vez)
+- **R** — remover um ativo da lista (o terminal pedirá o ticker ou o nome da empresa)
+- **G** — gerar o relatório com a lista atual (o terminal exibirá a lista final e pedirá confirmação: **S** para gerar, **N** para voltar)
+
+A lista confirmada é salva automaticamente em `data/ativos.txt`.
+
 ### Testar o dashboard sem rodar o pipeline
 
 Para visualizar o layout sem consumir a API, abra `dashboard/index_mock.html` diretamente no navegador. Ele contém dados fictícios de 3 ativos (PRIO3, ITUB4, SLCE3) já embutidos e funciona offline.
