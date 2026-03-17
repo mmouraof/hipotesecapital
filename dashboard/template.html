@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hipótese Capital — Briefing Semanal</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    [x-cloak] { display: none; }
+    .badge-positivo { @apply bg-green-100 text-green-800 border border-green-300; }
+    .badge-negativo { @apply bg-red-100 text-red-800 border border-red-300; }
+    .badge-neutro   { @apply bg-gray-100 text-gray-700 border border-gray-300; }
+  </style>
+</head>
+<body class="bg-gray-50 text-gray-900 font-sans">
+
+<!-- ─── DADOS ──────────────────────────────────────────────────────────────
+  Em produção, __DATA_PLACEHOLDER__ é substituído pelo JSON real via gera_dashboard.py.
+  Para testar localmente, comente a linha do placeholder e descomente o bloco MOCK abaixo.
+──────────────────────────────────────────────────────────────────────────── -->
+<script>
+  // PRODUÇÃO — substituído automaticamente pelo gerador:
+  const DATA = __DATA_PLACEHOLDER__;
+
+  // MOCK para teste local (descomente para usar):
+  /*
+  const DATA = {
+    "data_geracao": "2025-03-17",
+    "ativos": {
+      "PRIO3": {
+        "ticker": "PRIO3",
+        "nome_empresa": "PRIO",
+        "indicadores": {
+          "P/L": 6.2,
+          "P/VP": 1.8,
+          "ROE": "28%",
+          "Dividend Yield": "0%",
+          "Dívida Líquida/EBITDA": 0.4,
+          "Margem Líquida": "38%",
+          "EV/EBITDA": 4.1
+        },
+        "noticias": [
+          { "titulo": "PRIO bate recorde de produção no 4T24", "link": "#", "data_publicacao": "2025-03-15", "fonte": "Valor Econômico", "sentimento": "positivo", "justificativa": "Aumento de produção impacta positivamente receita e geração de caixa." },
+          { "titulo": "Petróleo recua com incerteza macro global", "link": "#", "data_publicacao": "2025-03-14", "fonte": "InfoMoney", "sentimento": "negativo", "justificativa": "Queda no preço do barril pressiona margens da companhia." }
+        ],
+        "analise": {
+          "resumo_negocio": "PRIO é uma operadora de petróleo focada em campos maduros offshore, com histórico de crescimento acelerado via aquisições e revitalização de ativos subexplorados.",
+          "interpretacao_indicadores": "P/L de 6,2x e EV/EBITDA de 4,1x indicam valuação atrativa para o setor de E&P. ROE de 28% com baixa alavancagem (DN/EBITDA 0,4x) sinaliza excelente qualidade de alocação de capital.",
+          "perguntas_investigativas": [
+            "Qual é o custo de extração por barril (lifting cost) e como ele evoluiu nos últimos 4 trimestres?",
+            "Quais são os planos de hedge de preço do petróleo para 2025?",
+            "Há riscos regulatórios relevantes relacionados às licenças dos campos Frade e Albacora?"
+          ]
+        }
+      },
+      "ITUB4": {
+        "ticker": "ITUB4",
+        "nome_empresa": "Itaú Unibanco",
+        "indicadores": {
+          "P/L": 9.1,
+          "P/VP": 2.1,
+          "ROE": "22%",
+          "Dividend Yield": "3.4%",
+          "Dívida Líquida/EBITDA": null,
+          "Margem Líquida": "27%",
+          "EV/EBITDA": null
+        },
+        "noticias": [
+          { "titulo": "Itaú anuncia plano de recompra de ações de R$ 4 bi", "link": "#", "data_publicacao": "2025-03-16", "fonte": "Exame", "sentimento": "positivo", "justificativa": "Recompra sinaliza confiança da gestão e melhora o retorno por ação." }
+        ],
+        "analise": {
+          "resumo_negocio": "Itaú Unibanco é o maior banco privado da América Latina, com operações diversificadas em varejo, atacado, seguros e gestão de patrimônio.",
+          "interpretacao_indicadores": "ROE consistente de 22% com P/VP de 2,1x é premium justificável pela qualidade da franquia. Dividend Yield de 3,4% mais recompras reforçam a tese de retorno ao acionista.",
+          "perguntas_investigativas": [
+            "Como a inadimplência (NPL) evoluiu no segmento de crédito ao consumidor em 2024?",
+            "Qual o impacto esperado da regulação do crédito rotativo do cartão sobre a margem financeira?",
+            "A expansão para América Latina (Chile, Colômbia) está contribuindo positivamente para o ROE consolidado?"
+          ]
+        }
+      },
+      "SLCE3": {
+        "ticker": "SLCE3",
+        "nome_empresa": "SLC Agrícola",
+        "indicadores": {
+          "P/L": 7.8,
+          "P/VP": 1.4,
+          "ROE": "18%",
+          "Dividend Yield": "4.1%",
+          "Dívida Líquida/EBITDA": 1.8,
+          "Margem Líquida": "14%",
+          "EV/EBITDA": 5.6
+        },
+        "noticias": [
+          { "titulo": "Safra de soja 2024/25 deve superar expectativas no Mato Grosso", "link": "#", "data_publicacao": "2025-03-13", "fonte": "Agência Reuters", "sentimento": "positivo", "justificativa": "Boa safra beneficia diretamente a receita da SLC nas regiões onde opera." },
+          { "titulo": "Dólar fraco preocupa exportadores de grãos", "link": "#", "data_publicacao": "2025-03-12", "fonte": "Broadcast Agro", "sentimento": "negativo", "justificativa": "Apreciação cambial reduz receita em reais para exportações de commodities." }
+        ],
+        "analise": {
+          "resumo_negocio": "SLC Agrícola é uma das maiores produtoras de grãos do Brasil, operando em modelo de arrendamento de terras com foco em soja, milho e algodão.",
+          "interpretacao_indicadores": "P/L de 7,8x e Dividend Yield de 4,1% são atrativos. A alavancagem de 1,8x DN/EBITDA merece monitoramento dado o ciclo de commodities, mas é administrável com o fluxo de caixa do negócio.",
+          "perguntas_investigativas": [
+            "Qual a estratégia de hedge cambial para a safra atual e como ela protege a margem?",
+            "Como o custo de arrendamento de terras evoluiu e qual o impacto na estrutura de custos?",
+            "Há planos de expansão de área plantada para 2025/26 e qual o custo de capital implícito?"
+          ]
+        }
+      }
+    }
+  };
+  */
+</script>
+
+<!-- ─── LAYOUT ─────────────────────────────────────────────────────────── -->
+<div class="flex h-screen overflow-hidden">
+
+  <!-- Sidebar -->
+  <aside class="w-56 bg-white border-r border-gray-200 flex flex-col">
+    <div class="px-4 py-5 border-b border-gray-100">
+      <h1 class="text-sm font-bold text-gray-800 leading-tight">Hipótese Capital</h1>
+      <p class="text-xs text-gray-400 mt-0.5">Briefing Semanal</p>
+    </div>
+    <nav class="flex-1 overflow-y-auto py-3 px-2" id="sidebar-nav"></nav>
+    <div class="px-4 py-3 border-t border-gray-100">
+      <p class="text-xs text-gray-400" id="footer-data"></p>
+    </div>
+  </aside>
+
+  <!-- Conteúdo principal -->
+  <main class="flex-1 overflow-y-auto bg-gray-50">
+    <div class="max-w-4xl mx-auto px-6 py-8" id="main-content">
+      <p class="text-gray-400 text-sm">Selecione um ativo na barra lateral.</p>
+    </div>
+  </main>
+
+</div>
+
+<script>
+  // ─── Utilitários ───────────────────────────────────────────────────────
+  const $ = id => document.getElementById(id);
+
+  function badgeClass(sentimento) {
+    if (sentimento === "positivo") return "bg-green-100 text-green-800 border border-green-300";
+    if (sentimento === "negativo") return "bg-red-100 text-red-800 border border-red-300";
+    return "bg-gray-100 text-gray-600 border border-gray-300";
+  }
+
+  function fmt(val) {
+    if (val === null || val === undefined) return '<span class="text-gray-400">—</span>';
+    return `<span>${val}</span>`;
+  }
+
+  // ─── Renderiza sidebar ─────────────────────────────────────────────────
+  function buildSidebar(tickers, ativoAtivo) {
+    const nav = $("sidebar-nav");
+    nav.innerHTML = "";
+    tickers.forEach(ticker => {
+      const btn = document.createElement("button");
+      btn.textContent = ticker;
+      btn.dataset.ticker = ticker;
+      const base = "w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors mb-0.5 ";
+      btn.className = base + (ticker === ativoAtivo
+        ? "bg-indigo-50 text-indigo-700"
+        : "text-gray-600 hover:bg-gray-100");
+      btn.addEventListener("click", () => renderAtivo(ticker));
+      nav.appendChild(btn);
+    });
+  }
+
+  // ─── Renderiza conteúdo de um ativo ────────────────────────────────────
+  function renderAtivo(ticker) {
+    const ativos = DATA.ativos || DATA; // suporta ambos os formatos
+    const d = ativos[ticker];
+    if (!d) return;
+
+    buildSidebar(Object.keys(ativos), ticker);
+
+    const analise = d.analise || {};
+    const indicadores = d.indicadores || {};
+    const noticias = d.noticias || [];
+
+    // Linhas da tabela de indicadores
+    const indKeys = ["P/L", "P/VP", "ROE", "Dividend Yield", "Dívida Líquida/EBITDA", "Margem Líquida", "EV/EBITDA"];
+    const indRows = indKeys.map(k => `
+      <tr class="border-t border-gray-100">
+        <td class="py-2 pr-4 text-gray-500 text-sm">${k}</td>
+        <td class="py-2 text-sm font-medium">${fmt(indicadores[k])}</td>
+      </tr>`).join("");
+
+    // Notícias com badges
+    const noticiasHtml = noticias.length ? noticias.map(n => {
+      const sentimento = n.sentimento || "neutro";
+      const badge = `<span class="inline-block text-xs px-2 py-0.5 rounded-full font-medium ${badgeClass(sentimento)}">${sentimento}</span>`;
+      const justif = n.justificativa ? `<p class="text-xs text-gray-500 mt-1">${n.justificativa}</p>` : "";
+      return `
+        <li class="py-3 border-b border-gray-100 last:border-0">
+          <div class="flex items-start gap-2">
+            <div class="flex-1">
+              <a href="${n.link}" target="_blank" class="text-sm text-gray-800 hover:text-indigo-600 font-medium leading-snug">${n.titulo}</a>
+              ${justif}
+              <p class="text-xs text-gray-400 mt-1">${n.fonte || ""} ${n.data_publicacao ? "· " + n.data_publicacao.slice(0,10) : ""}</p>
+            </div>
+            <div class="shrink-0 pt-0.5">${badge}</div>
+          </div>
+        </li>`;
+    }).join("") : '<li class="py-3 text-sm text-gray-400">Nenhuma notícia encontrada.</li>';
+
+    // Perguntas investigativas
+    const perguntas = (analise.perguntas_investigativas || []).map((p, i) => `
+      <li class="flex gap-3 py-2">
+        <span class="shrink-0 w-5 h-5 rounded-full bg-indigo-100 text-indigo-700 text-xs font-bold flex items-center justify-center mt-0.5">${i+1}</span>
+        <p class="text-sm text-gray-700">${p}</p>
+      </li>`).join("");
+
+    $("main-content").innerHTML = `
+      <!-- Header do ativo -->
+      <div class="mb-6">
+        <div class="flex items-center gap-3">
+          <span class="text-2xl font-bold text-gray-900">${ticker}</span>
+          <span class="text-gray-400 text-lg">·</span>
+          <span class="text-gray-600 text-lg">${d.nome_empresa}</span>
+        </div>
+      </div>
+
+      <!-- Grid de cards -->
+      <div class="space-y-5">
+
+        <!-- Resumo do negócio -->
+        <div class="bg-white rounded-xl border border-gray-200 p-5">
+          <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Resumo do Negócio</h2>
+          <p class="text-sm text-gray-700 leading-relaxed">${analise.resumo_negocio || "—"}</p>
+        </div>
+
+        <!-- Indicadores -->
+        <div class="bg-white rounded-xl border border-gray-200 p-5">
+          <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Indicadores Fundamentalistas</h2>
+          <table class="w-full mb-4">
+            <tbody>${indRows}</tbody>
+          </table>
+          <p class="text-sm text-gray-700 leading-relaxed border-t border-gray-100 pt-4">${analise.interpretacao_indicadores || "—"}</p>
+        </div>
+
+        <!-- Notícias -->
+        <div class="bg-white rounded-xl border border-gray-200 p-5">
+          <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Notícias Recentes</h2>
+          <ul>${noticiasHtml}</ul>
+        </div>
+
+        <!-- Perguntas investigativas -->
+        <div class="bg-white rounded-xl border border-gray-200 p-5">
+          <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Perguntas Investigativas</h2>
+          <ul class="space-y-1">${perguntas || '<li class="text-sm text-gray-400">—</li>'}</ul>
+        </div>
+
+      </div>`;
+  }
+
+  // ─── Init ──────────────────────────────────────────────────────────────
+  (function init() {
+    const ativos = DATA.ativos || DATA;
+    const tickers = Object.keys(ativos);
+
+    if (!tickers.length) {
+      $("main-content").innerHTML = '<p class="text-gray-400 text-sm">Nenhum dado disponível.</p>';
+      return;
+    }
+
+    $("footer-data").textContent = DATA.data_geracao
+      ? "Gerado em " + DATA.data_geracao
+      : "";
+
+    buildSidebar(tickers, tickers[0]);
+    renderAtivo(tickers[0]);
+  })();
+</script>
+
+</body>
+</html>
