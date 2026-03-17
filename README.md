@@ -58,8 +58,8 @@ O repositório inclui configuração de Dev Container para execução imediata.
 3. Configure a API key de uma das duas formas:
    - **Via Secret (recomendado):** antes de criar o Codespace, vá em Settings → Secrets and variables → Codespaces → New repository secret → nome `ANTHROPIC_API_KEY`
    - **Via `.env`:** no terminal do Codespace, execute `cp .env.example .env` e edite com sua chave
-4. Para visualizar o layout imediatamente (sem consumir a API), abra `dashboard/index_mock.html` no navegador
-5. Para rodar o pipeline completo: `python src/main.py` — o `dashboard/index.html` gerado será aberto automaticamente
+4. Para visualizar o layout imediatamente (sem consumir a API), baixe `dashboard/index_mock.html` e abra no navegador
+5. Para rodar o pipeline completo: `python src/main.py` — ao finalizar, baixe `dashboard/index.html` e abra no navegador
 
 ## Arquitetura
 
