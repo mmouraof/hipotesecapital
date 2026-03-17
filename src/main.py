@@ -3,6 +3,7 @@
 import json
 import logging
 import os
+import re
 import sys
 import time
 import webbrowser
@@ -55,6 +56,105 @@ def carregar_ativos(caminho: Path) -> list[tuple[str, str]]:
     return ativos
 
 
+_TICKER_RE = re.compile(r"^[A-Z]{4}\d{1,2}$")
+
+
+def _validar_ticker(ticker: str) -> str | None:
+    """Retorna mensagem de erro ou None se válido."""
+    t = ticker.strip().upper()
+    if not t:
+        return "Ticker não pode ser vazio."
+    if not _TICKER_RE.match(t):
+        return f"'{t}' não é um ticker válido. Use o formato XXXX3 (4 letras + 1 ou 2 dígitos)."
+    return None
+
+
+def selecionar_ativos(ativos_base: list[tuple[str, str]], caminho: Path) -> list[tuple[str, str]]:
+    """Loop interativo para adicionar/remover ativos antes de gerar o relatório.
+
+    Args:
+        ativos_base: Lista inicial carregada de ativos.txt.
+
+    Returns:
+        Lista final de ativos confirmada pelo usuário.
+    """
+    ativos: list[tuple[str, str]] = list(ativos_base)
+
+    while True:
+        print("\n════════════════════════════════════════════════════")
+        print("  ATIVOS NA LISTA ATUAL:")
+        if ativos:
+            for i, (t, n) in enumerate(ativos, 1):
+                print(f"    {i:2}. {t} | {n}")
+        else:
+            print("    (lista vazia)")
+        print("════════════════════════════════════════════════════")
+        print("  Para modificar a lista acima, digite a letra do comando correspondente e pressione Enter:\n")
+        print("  A  → adicionar um ativo à lista     (pedirá ticker e nome)")
+        print("  R  → remover um ativo da lista      (pedirá ticker ou nome)")
+        print("  G  → gerar o relatório com esta lista")
+        print("════════════════════════════════════════════════════")
+        cmd = input("\nComando (A / R / G): ").strip().upper()
+
+        if cmd == "A":
+            ticker_raw = input("  Digite o ticker a ser adicionado (ou Z para cancelar): ").strip().upper()
+            if ticker_raw == "Z":
+                continue
+            erro = _validar_ticker(ticker_raw)
+            if erro:
+                print(f"  ✗ {erro}")
+                continue
+            if any(t == ticker_raw for t, _ in ativos):
+                print(f"  ✗ '{ticker_raw}' já está na lista.")
+                continue
+            nome = input("  Digite o nome da empresa a ser adicionada (ou Z para cancelar): ").strip()
+            if nome.upper() == "Z":
+                continue
+            if not nome:
+                print("  ✗ Nome da empresa não pode ser vazio.")
+                continue
+            ativos.append((ticker_raw, nome))
+            print(f"  ✓ {ticker_raw} | {nome} adicionado.")
+
+        elif cmd == "R":
+            termo = input("  Digite o ticker ou nome da empresa a ser removida (ou Z para cancelar): ").strip().upper()
+            if termo == "Z":
+                continue
+            if not termo:
+                print("  ✗ Digite um ticker ou nome para remover.")
+                continue
+            antes = len(ativos)
+            ativos = [
+                (t, n) for t, n in ativos
+                if t != termo and n.upper() != termo
+            ]
+            if len(ativos) == antes:
+                print(f"  ✗ '{termo}' não encontrado na lista.")
+            else:
+                print(f"  ✓ Ativo removido.")
+
+        elif cmd == "G":
+            if not ativos:
+                print("  ✗ A lista está vazia. Adicione pelo menos um ativo.")
+                continue
+            print("\n  Ativos a processar:")
+            for i, (t, n) in enumerate(ativos, 1):
+                print(f"    {i:2}. {t} | {n}")
+            confirmacao = input("\n  Digite S para confirmar e N para cancelar: ").strip().upper()
+            if confirmacao == "S":
+                # Persiste a lista atualizada no arquivo
+                with open(caminho, "w", encoding="utf-8") as f:
+                    f.write("\n".join(f"{t}|{n}" for t, n in ativos) + "\n")
+                return ativos
+            elif confirmacao == "N":
+                continue
+            else:
+                print("  ✗ Digite S para confirmar ou N para cancelar.")
+
+        else:
+            print(f"  ✗ Comando '{cmd}' inválido. Use A, R ou G.")
+
+
 def processar_ativo(ticker: str, nome_empresa: str) -> dict:
     """Executa o pipeline completo de coleta e análise para um ativo.
 
@@ -96,7 +196,8 @@ def main() -> None:
         logger.error("OPENAI_API_KEY não encontrada — configure o .env")
         sys.exit(1)
 
-    ativos = carregar_ativos(ATIVOS_PATH)
+    ativos_base = carregar_ativos(ATIVOS_PATH)
+    ativos = selecionar_ativos(ativos_base, ATIVOS_PATH)
     logger.info("Iniciando briefing — %d ativos", len(ativos))
 
     inicio = time.time()
