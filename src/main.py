@@ -32,7 +32,7 @@ ROOT = Path(__file__).parent.parent
 ATIVOS_PATH = ROOT / "data" / "ativos.txt"
 OUTPUT_DIR = ROOT / "data" / "output"
 TEMPLATE_PATH = ROOT / "dashboard" / "template.html"
-DASHBOARD_OUTPUT = ROOT / "dashboard" / "index.html"
+DASHBOARD_OUTPUT = ROOT / "dashboard" / "output" / "index.html"
 
 
 def carregar_ativos(caminho: Path) -> list[tuple[str, str]]:
@@ -114,6 +114,7 @@ def main() -> None:
 
     hoje = date.today().isoformat()
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    DASHBOARD_OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     json_path = OUTPUT_DIR / f"{hoje}.json"
 
     payload = {"data_geracao": hoje, "ativos": resultados}

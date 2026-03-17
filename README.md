@@ -43,7 +43,7 @@ OPENAI_API_KEY=sk-sua-chave-aqui
 python src/main.py
 ```
 
-O script coleta os dados, gera as análises via API e monta o dashboard com os resultados embutidos em `dashboard/index.html`. Abra esse arquivo diretamente no navegador — nenhum servidor local é necessário. Ao final da execução, o arquivo é aberto automaticamente no navegador padrão.
+O script coleta os dados, gera as análises via API e monta o dashboard em `dashboard/output/index.html`. Abra esse arquivo diretamente no navegador — nenhum servidor local é necessário. Ao final da execução, o arquivo é aberto automaticamente no navegador padrão.
 
 ### Testar o dashboard sem rodar o pipeline
 
@@ -61,7 +61,7 @@ O repositório inclui configuração de Dev Container para execução imediata.
    - **Via Secret (recomendado):** antes de criar o Codespace, vá em Settings → Secrets and variables → Codespaces → New repository secret → adicione `ANTHROPIC_API_KEY` e `OPENAI_API_KEY`
    - **Via `.env`:** no terminal do Codespace, execute `cp .env.example .env` e edite com suas chaves
 4. Para visualizar o layout imediatamente (sem consumir a API), baixe `dashboard/index_mock.html` e abra no navegador
-5. Para rodar o pipeline completo: `python src/main.py` — ao finalizar, baixe `dashboard/index.html` e abra no navegador
+5. Para rodar o pipeline completo: `python src/main.py` — ao finalizar, baixe `dashboard/output/index.html` e abra no navegador
 
 ## Arquitetura
 
@@ -86,7 +86,7 @@ hipotese-capital/
 └── dashboard/
     ├── template.html           # Template com placeholder para dados
     ├── index_mock.html         # Versão com dados mock para testes (abrir no navegador)
-    └── index.html              # HTML final gerado pelo pipeline (autocontido)
+    └── output/                 # HTML gerado pelo pipeline (criado na primeira execução)
 ```
 
 ### Fluxo de dados
@@ -95,7 +95,7 @@ hipotese-capital/
 ativos.txt → coleta_indicadores.py (OpenAI web_search) → indicadores em JSON
            → coleta_noticias.py (RSS)                  → notícias em JSON
            → analise_llm.py (Claude API)               → resumos e insights
-           → data/output/YYYY-MM-DD.json               → dashboard/index.html
+           → data/output/YYYY-MM-DD.json               → dashboard/output/index.html
 ```
 
 ### Decisões técnicas

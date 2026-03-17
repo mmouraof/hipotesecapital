@@ -2,5 +2,6 @@
 __pycache__/
 *.pyc
 data/output/*.json
+dashboard/output/*.html
 node_modules/
 test_api.py
