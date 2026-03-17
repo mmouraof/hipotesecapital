@@ -5,6 +5,7 @@ import logging
 import os
 import re
 import sys
+import threading
 import time
 import webbrowser
 from datetime import date
@@ -57,6 +58,22 @@ def carregar_ativos(caminho: Path) -> list[tuple[str, str]]:
 
 
 _TICKER_RE = re.compile(r"^[A-Z]{4}\d{1,2}$")
+_TIMEOUT_INATIVIDADE = 60  # segundos
+
+
+def _input_timeout(prompt: str, timeout: float) -> str | None:
+    """Lê input do terminal com timeout. Retorna None se o tempo esgotar."""
+    resultado: list[str | None] = [None]
+    evento = threading.Event()
+
+    def _ler() -> None:
+        resultado[0] = input(prompt)
+        evento.set()
+
+    t = threading.Thread(target=_ler, daemon=True)
+    t.start()
+    evento.wait(timeout)
+    return resultado[0]
 
 
 def _validar_ticker(ticker: str) -> str | None:
@@ -93,8 +110,20 @@ def selecionar_ativos(ativos_base: list[tuple[str, str]], caminho: Path) -> list
         print("  A  → adicionar um ativo à lista     (pedirá ticker e nome)")
         print("  R  → remover um ativo da lista      (pedirá ticker ou nome)")
         print("  G  → gerar o relatório com esta lista")
+        print(f"\n  Após {_TIMEOUT_INATIVIDADE}s sem input, o relatório será gerado automaticamente.")
         print("════════════════════════════════════════════════════")
-        cmd = input("\nComando (A / R / G): ").strip().upper()
+        cmd_raw = _input_timeout("\nComando (A / R / G): ", _TIMEOUT_INATIVIDADE)
+
+        if cmd_raw is None:
+            if not ativos:
+                print("\n  Tempo esgotado, mas a lista está vazia. Adicione pelo menos um ativo.")
+                continue
+            print("\n  Tempo esgotado. Gerando relatório com a lista atual...")
+            with open(caminho, "w", encoding="utf-8") as f:
+                f.write("\n".join(f"{t}|{n}" for t, n in ativos) + "\n")
+            return ativos
+
+        cmd = cmd_raw.strip().upper()
 
         if cmd == "A":
             ticker_raw = input("  Digite o ticker a ser adicionado (ou Z para cancelar): ").strip().upper()

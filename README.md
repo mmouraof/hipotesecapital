@@ -51,7 +51,7 @@ Antes de iniciar a coleta, o script exibe uma etapa interativa no terminal para 
 - **R** — remover um ativo da lista (o terminal pedirá o ticker ou o nome da empresa)
 - **G** — gerar o relatório com a lista atual (o terminal exibirá a lista final e pedirá confirmação: **S** para gerar, **N** para voltar)
 
-A lista confirmada é salva automaticamente em `data/ativos.txt`.
+Caso não haja nenhum input por 1 minuto, o relatório é gerado automaticamente com a lista atual. A lista confirmada é salva automaticamente em `data/ativos.txt`.
 
 ### Testar o dashboard sem rodar o pipeline
 
