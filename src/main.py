@@ -5,6 +5,7 @@ import logging
 import os
 import sys
 import time
+import webbrowser
 from datetime import date
 from pathlib import Path
 
@@ -126,6 +127,7 @@ def main() -> None:
         f" Erros: {erros}" if erros else "",
     )
     print(f"\n✓ Dashboard gerado em: {DASHBOARD_OUTPUT}")
+    webbrowser.open(DASHBOARD_OUTPUT.as_uri())
 
 
 if __name__ == "__main__":

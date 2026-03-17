@@ -14,8 +14,8 @@ Desenvolvido como case técnico para a posição de Data Science & AI na Hipóte
 ### Instalação local
 
 ```bash
-git clone https://github.com/seu-usuario/hipotese-capital.git
-cd hipotese-capital
+git clone https://github.com/mmouraof/hipotesecapital.git
+cd hipotesecapital
 pip install -r requirements.txt
 ```
 
@@ -41,7 +41,7 @@ ANTHROPIC_API_KEY=sk-ant-sua-chave-aqui
 python src/main.py
 ```
 
-O script coleta os dados, gera as análises via API e monta o dashboard com os resultados embutidos em `dashboard/index.html`. Abra esse arquivo diretamente no navegador — nenhum servidor local é necessário.
+O script coleta os dados, gera as análises via API e monta o dashboard com os resultados embutidos em `dashboard/index.html`. Abra esse arquivo diretamente no navegador — nenhum servidor local é necessário. Ao final da execução, o arquivo é aberto automaticamente no navegador padrão.
 
 ### Testar o dashboard sem rodar o pipeline
 
@@ -58,8 +58,8 @@ O repositório inclui configuração de Dev Container para execução imediata.
 3. Configure a API key de uma das duas formas:
    - **Via Secret (recomendado):** antes de criar o Codespace, vá em Settings → Secrets and variables → Codespaces → New repository secret → nome `ANTHROPIC_API_KEY`
    - **Via `.env`:** no terminal do Codespace, execute `cp .env.example .env` e edite com sua chave
-4. Execute `python src/main.py`
-5. Abra `dashboard/index.html` — no Codespace, clique com botão direito no arquivo → "Open with Live Server", ou use a extensão "Simple Browser"
+4. Para visualizar o layout imediatamente (sem consumir a API), abra `dashboard/index_mock.html` no navegador
+5. Para rodar o pipeline completo: `python src/main.py` — o `dashboard/index.html` gerado será aberto automaticamente
 
 ## Arquitetura
 
