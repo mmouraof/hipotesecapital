@@ -29,9 +29,9 @@ Responda EXCLUSIVAMENTE com um JSON puro (sem markdown, sem texto adicional) com
   "interpretacao_indicadores": "parágrafo interpretando os indicadores sob a ótica de value investing",
   "noticias_classificadas": [
     {{
-      "titulo": "título da notícia",
-      "sentimento": "positivo|negativo|neutro",
-      "justificativa": "uma frase explicando o impacto"
+      "titulo": "título EXATO da notícia, copiado da lista acima",
+      "sentimento": "positivo ou negativo ou neutro — analise o título com cuidado; use neutro SOMENTE se for impossível determinar impacto",
+      "justificativa": "obrigatório — explique em uma frase o impacto específico desta notícia para o ativo {ticker}; nunca deixe vazio"
     }}
   ],
   "perguntas_investigativas": [
@@ -39,7 +39,12 @@ Responda EXCLUSIVAMENTE com um JSON puro (sem markdown, sem texto adicional) com
     "pergunta 2",
     "pergunta 3"
   ]
-}}"""
+}}
+
+REGRAS para noticias_classificadas:
+- Inclua TODAS as notícias listadas acima, uma por uma, na mesma ordem
+- O campo "justificativa" é OBRIGATÓRIO em todos os itens — nunca retorne string vazia ou null
+- Prefira "positivo" ou "negativo" sempre que o título indicar qualquer tendência; reserve "neutro" para notícias genuinamente sem impacto identificável"""
 
 
 def gerar_analise(
