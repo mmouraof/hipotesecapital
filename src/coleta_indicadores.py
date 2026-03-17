@@ -29,13 +29,13 @@ def coletar_indicadores(ticker: str, nome_empresa: str) -> dict:
     url = f"https://investidor10.com.br/acoes/{ticker.lower()}/"
 
     prompt = (
-        f"Acesse a página {url} e aguarde o carregamento completo de todos os dados. "
-        "Extraia os seguintes indicadores fundamentalistas: P/L, P/VP, ROE, Dividend Yield, "
-        "Dívida Líquida/EBITDA, Margem Líquida, EV/EBITDA. "
-        "Se encontrar outros indicadores relevantes na página além desses, inclua-os também. "
-        "Retorne um JSON puro (sem markdown, sem explicação) com os nomes dos indicadores como chaves. "
-        "Use null SOMENTE se o valor estiver genuinamente ausente ou indisponível na página — "
-        "se o valor existir na página, ele deve estar no JSON."
+        f"Acesse a página {url} e extraia os seguintes indicadores fundamentalistas de {nome_empresa} ({ticker}): "
+        "P/L, P/VP, ROE, Dividend Yield, Dívida Líquida/EBITDA, Margem Líquida. "
+        "Para cada indicador não encontrado nessa página, busque em fontes alternativas como "
+        "Status Invest ou Fundamentus antes de retornar null. "
+        "Use null apenas se o valor for confirmadamente indisponível em todas as fontes consultadas. "
+        "Retorne SOMENTE um JSON puro (sem markdown, sem explicação) com exatamente estas chaves: "
+        "\"P/L\", \"P/VP\", \"ROE\", \"Dividend Yield\", \"Dívida Líquida/EBITDA\", \"Margem Líquida\"."
     )
 
     try:
