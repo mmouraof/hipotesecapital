@@ -65,8 +65,6 @@ def processar_ativo(ticker: str, nome_empresa: str) -> dict:
     Returns:
         Dict com indicadores, noticias e analise do ativo.
     """
-    logger.info("[%s] iniciando", ticker)
-
     indicadores = coletar_indicadores(ticker, nome_empresa)
     noticias = coletar_noticias(ticker, nome_empresa)
     analise = gerar_analise(ticker, nome_empresa, indicadores, noticias)
@@ -105,7 +103,9 @@ def main() -> None:
     resultados = {}
     erros = []
 
-    for ticker, nome_empresa in ativos:
+    total = len(ativos)
+    for i, (ticker, nome_empresa) in enumerate(ativos, start=1):
+        logger.info("[%s] iniciando (%d/%d)", ticker, i, total)
         try:
             resultados[ticker] = processar_ativo(ticker, nome_empresa)
         except Exception as e:
