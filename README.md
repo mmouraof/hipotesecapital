@@ -87,9 +87,9 @@ hipotese-capital/
 │   └── output/                 # JSONs gerados (um por execução)
 ├── src/
 │   ├── main.py                 # Orquestrador principal
-│   ├── coleta_indicadores.py   # Scraping do Fundamentus + fallback GPT-4o
+│   ├── coleta_indicadores.py   # Scraping do Fundamentus + fallbacks
 │   ├── coleta_noticias.py      # Coleta de notícias via RSS (Google News)
-│   ├── analise_llm.py          # Análise e seleção de indicadores via Claude
+│   ├── analise_llm.py          # Análise e seleção de indicadores via Claude, GPT e Gemini
 │   └── gera_dashboard.py       # Injeta dados no template HTML
 └── dashboard/
     ├── template.html           # Template com placeholder para dados
@@ -134,7 +134,7 @@ Se GPT-4o ou Gemini falharem, o pipeline degrada graciosamente: se apenas um dos
 
 ### Seleção de indicadores para o dashboard
 
-Claude e GPT-4o recebem o conjunto bruto completo de indicadores (incluindo DRE e balanço) e cada um seleciona entre 8 e 12 dos mais relevantes para value investing. A cotação e a data base são sempre incluídas como primeiros itens. O Gemini preserva a seleção do Claude no campo `indicadores_dashboard`, que é exibido diretamente no dashboard — sem lista fixa hardcoded no frontend.
+Claude e GPT-4o recebem o conjunto bruto completo de indicadores (incluindo DRE e balanço) e cada um seleciona entre 8 e 12 dos mais relevantes para value investing. O Gemini preserva a seleção do Claude no campo `indicadores_dashboard`, que é exibido diretamente no dashboard.
 
 ### Decisões técnicas
 
@@ -175,7 +175,7 @@ Definidas em `requirements.txt`:
 
 - `anthropic` — SDK oficial da API Claude (análise fundamentalista)
 - `openai` — SDK oficial da API OpenAI (análise GPT-4o + fallback de coleta)
-- `google-generativeai` — SDK oficial do Google (síntese via Gemini 2.5 Flash)
+- `google-genai` — SDK oficial do Google (síntese via Gemini 2.5 Flash)
 - `curl_cffi` — Requisições HTTP com impersonação de TLS do Chrome (contorna Cloudflare no Fundamentus)
 - `beautifulsoup4` — Parsing do HTML do Fundamentus
 - `feedparser` — Parsing de feeds RSS
