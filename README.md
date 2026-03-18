@@ -10,7 +10,8 @@ Desenvolvido como case técnico para a posição de Data Science & AI na Hipóte
 
 - Python 3.11+
 - Uma API key da [Anthropic](https://console.anthropic.com/)
-- Uma API key da [OpenAI](https://platform.openai.com/)
+- Uma API key da [OpenAI](https://platform.openai.com/) (opcional)
+- Uma API key da [GoogleAI](https://aistudio.google.com/) (opcional)
 
 ### Instalação local
 
