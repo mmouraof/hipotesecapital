@@ -259,6 +259,39 @@
         <p class="text-sm text-gray-700">${p}</p>
       </li>`).join("");
 
+    // Histórico
+    const historico = (d.historico || []).slice().sort((a, b) => b.data.localeCompare(a.data));
+    let historicoHtml;
+    if (!historico.length) {
+      historicoHtml = '<p class="text-sm text-gray-400">Primeira execução — histórico será exibido a partir da próxima.</p>';
+    } else {
+      const histRows = historico.map(h => `
+        <tr class="border-t border-gray-100">
+          <td class="py-2 pr-4 text-sm text-gray-700 whitespace-nowrap">${h.data}</td>
+          <td class="py-2 pr-4 text-sm font-medium whitespace-nowrap">R$ ${h.cotacao}</td>
+          <td class="py-2 pr-4 text-sm text-gray-700 whitespace-nowrap">${h.pl}</td>
+          <td class="py-2 pr-4 text-sm text-gray-700 whitespace-nowrap">${h.dy}</td>
+          <td class="py-2">
+            <span class="inline-block text-xs px-2 py-0.5 rounded-full font-semibold border ${semaforoClass(h.classificacao)}">${h.classificacao}</span>
+          </td>
+        </tr>`).join("");
+      historicoHtml = `
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead>
+              <tr class="bg-gray-50">
+                <th class="pr-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Data</th>
+                <th class="pr-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Cotação</th>
+                <th class="pr-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">P/L</th>
+                <th class="pr-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Div. Yield</th>
+                <th class="py-2 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Classificação</th>
+              </tr>
+            </thead>
+            <tbody>${histRows}</tbody>
+          </table>
+        </div>`;
+    }
+
     // Header: cotação + semáforo
     const cotacaoHtml = cotacao
       ? `<div class="ml-auto text-right shrink-0">
@@ -318,6 +351,12 @@
         <div class="bg-white rounded-xl border border-gray-200 p-5">
           <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Perguntas Investigativas</h2>
           <ul class="space-y-1">${perguntas || '<li class="text-sm text-gray-400">—</li>'}</ul>
+        </div>
+
+        <!-- Histórico -->
+        <div class="bg-white rounded-xl border border-gray-200 p-5">
+          <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Histórico</h2>
+          ${historicoHtml}
         </div>
 
       </div>`;
