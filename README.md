@@ -33,8 +33,8 @@ Abra o `.env` e substitua os valores placeholder pelas suas chaves:
 
 ```
 ANTHROPIC_API_KEY=sk-ant-sua-chave-aqui
-OPENAI_API_KEY=sk-sua-chave-aqui   # opcional
-GOOGLE_API_KEY=sua-chave-aqui      # opcional
+OPENAI_API_KEY=sk-sua-chave-aqui  
+GOOGLE_API_KEY=sua-chave-aqui     
 ```
 
 > **Segurança:** O arquivo `.env` está no `.gitignore` e nunca será commitado. Nunca compartilhe sua chave diretamente no código ou em commits.
