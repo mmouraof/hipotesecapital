@@ -59,8 +59,6 @@ Caso não haja nenhum input por 1 minuto, o relatório é gerado automaticamente
 
 Para visualizar o layout sem consumir a API, abra `dashboard/index_mock.html` diretamente no navegador. Ele contém dados fictícios de 3 ativos (PRIO3, ITUB4, SLCE3) já embutidos e funciona offline.
 
-> `index_mock.html` é gerado a partir do mesmo template, mas com o bloco mock ativo. Não edite `template.html` para isso — o template deve permanecer intacto para o pipeline de produção.
-
 ## Usando GitHub Codespaces
 
 O repositório inclui configuração de Dev Container para execução imediata.
