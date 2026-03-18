@@ -45,7 +45,17 @@ GOOGLE_API_KEY=sua-chave-aqui
 python src/main.py
 ```
 
-O script coleta os dados, gera as análises via API e monta o dashboard em `dashboard/output/index.html`. Abra esse arquivo diretamente no navegador — nenhum servidor local é necessário. Ao final da execução, o arquivo é aberto automaticamente no navegador padrão.
+O script coleta os dados, gera as análises via API, salva um snapshot no banco SQLite e monta o dashboard em `dashboard/output/index.html`. Abra esse arquivo diretamente no navegador — nenhum servidor local é necessário. Ao final da execução, o arquivo é aberto automaticamente no navegador padrão.
+
+### Regenerar dashboard sem coletar dados novos
+
+```bash
+# Dashboard da última execução armazenada no banco
+python src/main.py --apenas-dashboard
+
+# Dashboard de uma data específica
+python src/main.py --data 2026-03-14
+```
 
 Antes de iniciar a coleta, o script exibe uma etapa interativa no terminal para revisar os ativos. Digite a letra do comando desejado e pressione Enter:
 
@@ -84,9 +94,11 @@ hipotese-capital/
 ├── requirements.txt
 ├── data/
 │   ├── ativos.txt              # Tickers + nomes das empresas
-│   └── output/                 # JSONs gerados (um por execução)
+│   ├── briefing.db             # Banco SQLite local (gerado automaticamente, no .gitignore)
+│   └── output/                 # JSONs gerados (backup por execução, no .gitignore)
 ├── src/
 │   ├── main.py                 # Orquestrador principal
+│   ├── database.py             # Persistência SQLite e consulta a dados históricos
 │   ├── coleta_indicadores.py   # Scraping do Fundamentus + fallbacks
 │   ├── coleta_noticias.py      # Coleta de notícias via RSS (Google News)
 │   ├── analise_llm.py          # Análise e seleção de indicadores via Claude, GPT e Gemini
@@ -108,8 +120,10 @@ ativos.txt → coleta_indicadores.py  (scraping Fundamentus → Investidor10 →
                                      (GPT-4o         → análise B)
                                      (Gemini 2.5 Flash → síntese de A+B)
                                      → análise final + indicadores_dashboard selecionados
-           → data/output/YYYY-MM-DD.json
-           → dashboard/output/index.html
+           → database.py            → snapshot salvo em data/briefing.db (SQLite)
+           → data/output/YYYY-MM-DD.json   (backup legível por execução)
+           → gera_dashboard.py      → consulta histórico do banco por ticker
+           → dashboard/output/index.html   (histórico embutido no JSON)
 ```
 
 ### Coleta de indicadores
@@ -143,6 +157,7 @@ O dashboard abre na tela de **Visão Geral**, exibindo a tabela resumida de todo
 - **Semáforo** (*atrativo* / *neutro* / *cautela*) com razão em uma frase, exibido no cabeçalho
 - **Interpretação em 3 seções**: Valuation, Rentabilidade e Endividamento
 - **Notícias** com badge de sentimento, fonte, data e justificativa de impacto
+- **Histórico**: tabela com as execuções anteriores do ativo (cotação, P/L, Div. Yield, classificação por data)
 
 Em dispositivos móveis, a barra lateral é ocultada e acessível via botão de menu.
 
@@ -156,6 +171,9 @@ Google News RSS é gratuito, estável e não requer parsing de HTML frágil. Ret
 
 **Por que três modelos diferentes (Claude, GPT-4o e Gemini)?**
 Cada modelo tem pontos fortes distintos na análise textual; usar dois modelos independentes para a análise e um terceiro para arbitrar e sintetizar reduz vieses individuais e tende a produzir textos mais equilibrados. O Gemini atua como editor — não como analista —, garantindo que nenhum dado seja fabricado fora dos dados de mercado coletados. O GPT-4o também serve como fallback de coleta de indicadores quando o scraping falha, aproveitando sua integração nativa com web search.
+
+**Por que SQLite em vez de apenas arquivos JSON?**
+O case exige versionamento temporal (dados de hoje não sobrescrevem os de ontem) e consulta a dados históricos no dashboard. O SQLite resolve ambos sem dependências externas: cada execução cria um snapshot por ticker na tabela `ativos_snapshot`, e queries com `JOIN` permitem recuperar o histórico de qualquer ativo nas últimas N execuções. O JSON em `data/output/` é mantido como backup legível por execução. O banco é criado automaticamente em `data/briefing.db` na primeira execução e está no `.gitignore`.
 
 **Por que `curl_cffi` em vez de `requests` para o scraping?**
 O Fundamentus é protegido por Cloudflare, que bloqueia requisições HTTP comuns vindas de IPs de datacenter com um desafio 403. O `curl_cffi` impersona o fingerprint TLS do Chrome, fazendo a requisição parecer um navegador real e contornando o bloqueio sem necessidade de Selenium ou Playwright.
