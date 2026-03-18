@@ -2,6 +2,7 @@
 __pycache__/
 *.pyc
 data/output/*.json
+data/briefing.db
 dashboard/output/*.html
 node_modules/
 test_api.py
