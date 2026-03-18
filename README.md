@@ -128,13 +128,23 @@ A etapa de análise executa um pipeline de três modelos em sequência:
 
 1. **Claude Sonnet** e **GPT-4o** recebem o mesmo prompt de análise de forma independente, cada um produzindo: resumo do negócio, interpretação dos indicadores, seleção de indicadores para o dashboard, classificação de sentimento das notícias e perguntas investigativas.
 
-2. **Gemini 2.5 Flash** recebe as duas análises e as sintetiza — sem gerar dados novos. Sua única função é selecionar e combinar o melhor conteúdo já produzido: resume o negócio em exatamente 3 frases, escolhe a interpretação mais precisa entre os dois modelos, copia o `indicadores_dashboard` do Claude sem alteração (pois vem de dados reais do scraping), seleciona o sentimento mais bem fundamentado para cada notícia e escolhe as 3 perguntas mais relevantes e distintas entre as 6 disponíveis.
+2. **Gemini 2.5 Flash** recebe as duas análises e as sintetiza — sem gerar dados novos. Sua única função é selecionar e combinar o melhor conteúdo já produzido: resume o negócio em exatamente 3 frases, divide a interpretação dos indicadores em 3 seções temáticas (Valuation, Rentabilidade, Endividamento), classifica o ativo como *atrativo*, *neutro* ou *cautela* com justificativa, copia o `indicadores_dashboard` do Claude sem alteração (pois vem de dados reais do scraping), seleciona o sentimento mais bem fundamentado para cada notícia e escolhe as 3 perguntas mais relevantes e distintas entre as 6 disponíveis.
 
-Se GPT-4o ou Gemini falharem, o pipeline degrada graciosamente: se apenas um dos dois modelos de análise funcionar, o resultado é usado diretamente; se o Gemini falhar, a análise do Claude é retornada sem síntese.
+Se GPT-4o ou Gemini falharem, o pipeline degrada graciosamente: se apenas um dos dois modelos de análise funcionar, o resultado é enriquecido por um modelo **Claude Haiku** (leve e barato) que adiciona a classificação semáforo e reestrutura a interpretação em 3 seções sem gerar dados novos. Se o enriquecimento Haiku também falhar, a análise do Claude é retornada no formato original.
 
 ### Seleção de indicadores para o dashboard
 
 Claude e GPT-4o recebem o conjunto bruto completo de indicadores (incluindo DRE e balanço) e cada um seleciona entre 8 e 12 dos mais relevantes para value investing. O Gemini preserva a seleção do Claude no campo `indicadores_dashboard`, que é exibido diretamente no dashboard.
+
+### Dashboard
+
+O dashboard abre na tela de **Visão Geral**, exibindo a tabela resumida de todos os ativos com cotação e semáforo. Ao clicar em um ativo, a visualização detalha:
+
+- **Semáforo** (*atrativo* / *neutro* / *cautela*) com razão em uma frase, exibido no cabeçalho
+- **Interpretação em 3 seções**: Valuation, Rentabilidade e Endividamento
+- **Notícias** com badge de sentimento, fonte, data e justificativa de impacto
+
+Em dispositivos móveis, a barra lateral é ocultada e acessível via botão de menu.
 
 ### Decisões técnicas
 

@@ -202,13 +202,24 @@ def processar_ativo(ticker: str, nome_empresa: str) -> dict:
     noticias = coletar_noticias(ticker, nome_empresa)
     analise = gerar_analise(ticker, nome_empresa, indicadores, noticias)
 
-    # Injeta sentimento, justificativa e relevância nas notícias por índice
+    # Injeta sentimento, justificativa e relevância nas notícias por índice.
+    # Também enriquece analise.noticias_classificadas com link/fonte/data_publicacao
+    # dos dados brutos para que o dashboard use noticias_classificadas como fonte única.
     classificadas = analise.get("noticias_classificadas", [])
     for i, noticia in enumerate(noticias):
         match = classificadas[i] if i < len(classificadas) else {}
         noticia["sentimento"] = match.get("sentimento", "neutro")
         noticia["justificativa"] = match.get("justificativa", "")
         noticia["relevante"] = match.get("relevante", True)
+        if i < len(classificadas):
+            fonte = noticia.get("fonte", "")
+            classificadas[i]["link"] = noticia.get("link", "")
+            classificadas[i]["fonte"] = fonte
+            classificadas[i]["data_publicacao"] = noticia.get("data_publicacao", "")
+            # Remove "(Fonte)" duplicado que o LLM às vezes inclui no título
+            if fonte:
+                titulo = classificadas[i].get("titulo", "")
+                classificadas[i]["titulo"] = titulo.replace(f"({fonte})", "").strip()
 
     # Remove notícias marcadas como não relacionadas ao ativo
     noticias_filtradas = [n for n in noticias if n.get("relevante", True)]

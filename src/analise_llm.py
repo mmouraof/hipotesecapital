@@ -36,7 +36,7 @@ Responda EXCLUSIVAMENTE com um JSON puro (sem markdown, sem texto adicional) com
   ],
   "noticias_classificadas": [
     {{
-      "titulo": "título EXATO da notícia, copiado da lista acima",
+      "titulo": "título da notícia copiado da lista acima — remova o nome da fonte se aparecer após travessão ou entre parênteses no final (ex: '... - Valor Econômico' ou '... (InfoMoney)')",
       "relevante": true,
       "sentimento": "positivo ou negativo ou neutro — analise o título com cuidado; use neutro SOMENTE se for impossível determinar impacto",
       "justificativa": "obrigatório — explique em uma frase o impacto específico desta notícia para o ativo {ticker}; nunca deixe vazio"
@@ -80,8 +80,16 @@ Empresa: {nome_empresa}
 ## Instrução
 Responda EXCLUSIVAMENTE com um JSON puro (sem markdown, sem texto adicional) com a seguinte estrutura:
 {{
+  "classificacao": {{
+    "label": "atrativo ou neutro ou cautela — escolha com base nos indicadores e análises disponíveis",
+    "razao": "uma frase objetiva explicando o principal fator da classificação"
+  }},
   "resumo_negocio": "síntese em EXATAMENTE 3 frases, combinando os pontos mais relevantes das análises A e B — sem adicionar dados novos",
-  "interpretacao_indicadores": "escolha o parágrafo mais completo e preciso entre A e B, ou combine trechos complementares — sem adicionar dados novos",
+  "interpretacao_indicadores": [
+    {{"titulo": "Valuation", "texto": "parágrafo sobre múltiplos de valuation (P/L, P/VP, EV/EBITDA etc.) — extraído ou combinado das análises A e B, sem dados novos"}},
+    {{"titulo": "Rentabilidade", "texto": "parágrafo sobre rentabilidade e margens (ROE, ROIC, Mrg. Líq., Mrg. Ebit etc.) — extraído ou combinado das análises A e B, sem dados novos"}},
+    {{"titulo": "Endividamento", "texto": "parágrafo sobre estrutura de capital e endividamento (Dív.Líq./EBITDA, Dívida Bruta, Patrimônio Líquido etc.) — extraído ou combinado das análises A e B, sem dados novos"}}
+  ],
   "indicadores_dashboard": {indicadores_dashboard_json},
   "noticias_classificadas": [
     {{
@@ -100,7 +108,41 @@ REGRAS ABSOLUTAS:
 - Não invente dados, números, percentuais, nomes ou fatos que não apareçam nas análises A ou B
 - O campo indicadores_dashboard já está preenchido acima — não altere nenhum item
 - Para noticias_classificadas, inclua TODAS as notícias na mesma ordem das análises originais; para "relevante", marque true se ao menos uma das análises marcar true
-- Para perguntas_investigativas, copie as perguntas exatamente como estão — não reformule"""
+- Para perguntas_investigativas, copie as perguntas exatamente como estão — não reformule
+- Para classificacao.label use exatamente uma das três opções: "atrativo", "neutro" ou "cautela\""""
+
+
+_PROMPT_ENRIQUECIMENTO = """Você é um editor financeiro. Receberá uma análise fundamentalista e deve:
+1. Classificar o ativo como "atrativo", "neutro" ou "cautela" com base no texto da análise
+2. Dividir a interpretação dos indicadores em 3 seções temáticas
+
+Não invente dados novos. Use apenas o conteúdo já presente na análise.
+
+## Ativo: {ticker} — {nome_empresa}
+
+## Resumo do Negócio
+{resumo}
+
+## Interpretação Original dos Indicadores
+{interpretacao}
+
+## Instrução
+Responda EXCLUSIVAMENTE com JSON puro (sem markdown, sem texto adicional):
+{{
+  "classificacao": {{
+    "label": "atrativo ou neutro ou cautela",
+    "razao": "uma frase objetiva explicando o principal fator"
+  }},
+  "interpretacao_indicadores": [
+    {{"titulo": "Valuation", "texto": "parágrafo sobre múltiplos de valuation extraído do texto original"}},
+    {{"titulo": "Rentabilidade", "texto": "parágrafo sobre rentabilidade e margens extraído do texto original"}},
+    {{"titulo": "Endividamento", "texto": "parágrafo sobre estrutura de capital e endividamento extraído do texto original"}}
+  ]
+}}
+
+REGRAS:
+- classificacao.label deve ser exatamente uma de: "atrativo", "neutro", "cautela"
+- Distribua o conteúdo existente nas 3 seções sem inventar dados — se um tema não tiver cobertura, use o que houver disponível"""
 
 
 def _extrair_json(texto: str) -> dict:
@@ -176,6 +218,42 @@ def _gerar_analise_gpt(
     analise = _extrair_json(texto)
     logger.info("[%s] análise GPT-4o gerada", ticker)
     return analise
+
+
+def _enriquecer_analise_haiku(
+    ticker: str,
+    nome_empresa: str,
+    analise_claude: dict,
+) -> dict:
+    """Chama claude-haiku-4-5 para adicionar classificacao e reestruturar
+    interpretacao_indicadores em 3 seções, sem alterar os outros campos.
+
+    Usado como fallback quando Gemini não está disponível.
+    """
+    interpretacao = analise_claude.get("interpretacao_indicadores", "")
+    resumo = analise_claude.get("resumo_negocio", "")
+    # Se já vier no formato array (enriquecido anteriormente), não reprocessar
+    if isinstance(interpretacao, list):
+        return analise_claude
+
+    prompt = _PROMPT_ENRIQUECIMENTO.format(
+        ticker=ticker,
+        nome_empresa=nome_empresa,
+        resumo=resumo,
+        interpretacao=interpretacao,
+    )
+
+    client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
+    response = client.messages.create(
+        model="claude-haiku-4-5-20251001",
+        max_tokens=1024,
+        messages=[{"role": "user", "content": prompt}],
+    )
+    enriquecimento = _extrair_json(response.content[0].text.strip())
+    analise_claude["classificacao"] = enriquecimento["classificacao"]
+    analise_claude["interpretacao_indicadores"] = enriquecimento["interpretacao_indicadores"]
+    logger.info("[%s] enriquecimento Haiku gerado", ticker)
+    return analise_claude
 
 
 def _sintetizar_gemini(
@@ -280,8 +358,12 @@ def gerar_analise(
     if analise_claude is None:
         return {"erro": "Análise Claude falhou e é obrigatória."}
 
-    # Sem análise do GPT, retorna Claude diretamente (sem síntese)
+    # Sem análise do GPT, enriquece Claude com Haiku e retorna diretamente
     if analise_gpt is None:
+        try:
+            analise_claude = _enriquecer_analise_haiku(ticker, nome_empresa, analise_claude)
+        except Exception as e:
+            logger.warning("[%s] Haiku enriquecimento falhou (%s) — retornando Claude sem enriquecimento", ticker, e)
         return _normalizar_analise(analise_claude)
 
     # ── Etapa 3: Gemini 2.5 Flash — síntese ───────────────────────────────
@@ -289,5 +371,9 @@ def gerar_analise(
     try:
         return _normalizar_analise(_sintetizar_gemini(ticker, nome_empresa, analise_claude, analise_gpt))
     except Exception as e:
-        logger.warning("[%s] Gemini falhou (%s) — retornando análise Claude", ticker, e)
+        logger.warning("[%s] Gemini falhou (%s) — enriquecendo com Haiku", ticker, e)
+        try:
+            analise_claude = _enriquecer_analise_haiku(ticker, nome_empresa, analise_claude)
+        except Exception as e2:
+            logger.warning("[%s] Haiku enriquecimento falhou (%s) — retornando Claude sem enriquecimento", ticker, e2)
         return _normalizar_analise(analise_claude)
