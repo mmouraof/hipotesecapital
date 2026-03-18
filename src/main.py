@@ -1,5 +1,6 @@
 """Orquestrador principal do briefing semanal da Hipótese Capital."""
 
+import argparse
 import json
 import logging
 import os
@@ -16,6 +17,7 @@ from dotenv import load_dotenv
 # Garante que src/ seja encontrado quando executado da raiz
 sys.path.insert(0, str(Path(__file__).parent))
 
+import database
 from analise_llm import gerar_analise
 from coleta_indicadores import coletar_indicadores
 from coleta_noticias import coletar_noticias
@@ -35,6 +37,7 @@ ATIVOS_PATH = ROOT / "data" / "ativos.txt"
 OUTPUT_DIR = ROOT / "data" / "output"
 TEMPLATE_PATH = ROOT / "dashboard" / "template.html"
 DASHBOARD_OUTPUT = ROOT / "dashboard" / "output" / "index.html"
+DB_PATH = str(ROOT / "data" / "briefing.db")
 
 
 def carregar_ativos(caminho: Path) -> list[tuple[str, str]]:
@@ -236,10 +239,79 @@ def processar_ativo(ticker: str, nome_empresa: str) -> dict:
     }
 
 
+def _args() -> argparse.Namespace:
+    """Processa os argumentos de linha de comando."""
+    parser = argparse.ArgumentParser(
+        description="Briefing semanal da Hipótese Capital",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog=(
+            "Exemplos:\n"
+            "  python src/main.py                        # execução completa\n"
+            "  python src/main.py --apenas-dashboard     # regenera dashboard da última execução\n"
+            "  python src/main.py --data 2026-03-14      # dashboard de uma data específica\n"
+        ),
+    )
+    parser.add_argument(
+        "--apenas-dashboard",
+        action="store_true",
+        help="Regenera o dashboard a partir da última execução no banco, sem coletar dados novos.",
+    )
+    parser.add_argument(
+        "--data",
+        metavar="YYYY-MM-DD",
+        help="Gera o dashboard para uma data específica do banco.",
+    )
+    return parser.parse_args()
+
+
+def _gerar_dashboard_do_banco(execucao: dict) -> None:
+    """Reconstrói o payload e gera o dashboard a partir de uma execução do banco.
+
+    Args:
+        execucao: Dict com os dados da execução (resultado de buscar_execucao_*).
+    """
+    snapshots = database.buscar_snapshots(DB_PATH, execucao["id"])
+    resultados = {}
+    for snap in snapshots:
+        resultados[snap["ticker"]] = {
+            "ticker": snap["ticker"],
+            "nome_empresa": snap["nome_empresa"],
+            "indicadores": snap["indicadores"],
+            "noticias": snap["noticias"],
+            "analise": snap["analise"],
+        }
+
+    payload = {"data_geracao": execucao["data_execucao"], "ativos": resultados}
+    DASHBOARD_OUTPUT.parent.mkdir(parents=True, exist_ok=True)
+    gerar_dashboard(payload, str(TEMPLATE_PATH), str(DASHBOARD_OUTPUT), DB_PATH)
+    print(f"\n✓ Dashboard gerado em: {DASHBOARD_OUTPUT}")
+    webbrowser.open(DASHBOARD_OUTPUT.as_uri())
+
+
 def main() -> None:
     """Ponto de entrada do orquestrador."""
     load_dotenv()
+    args = _args()
 
+    database.inicializar_banco(DB_PATH)
+
+    # ── Modos sem coleta: --apenas-dashboard ou --data ────────────────────
+    if args.apenas_dashboard or args.data:
+        if args.data:
+            execucao = database.buscar_execucao_por_data(DB_PATH, args.data)
+            if not execucao:
+                logger.error("Nenhuma execução encontrada para a data %s", args.data)
+                sys.exit(1)
+        else:
+            execucao = database.buscar_ultima_execucao(DB_PATH)
+            if not execucao:
+                logger.error("Nenhuma execução encontrada no banco. Rode sem argumentos primeiro.")
+                sys.exit(1)
+        logger.info("Gerando dashboard da execução %s (id=%d)", execucao["data_execucao"], execucao["id"])
+        _gerar_dashboard_do_banco(execucao)
+        return
+
+    # ── Execução completa ─────────────────────────────────────────────────
     if not os.environ.get("ANTHROPIC_API_KEY") and not os.environ.get("OPENAI_API_KEY"):
         logger.error("Nenhuma chave de análise encontrada — configure ANTHROPIC_API_KEY ou OPENAI_API_KEY no .env")
         sys.exit(1)
@@ -254,6 +326,9 @@ def main() -> None:
     ativos = selecionar_ativos(ativos_base, ATIVOS_PATH)
     logger.info("Iniciando briefing — %d ativos", len(ativos))
 
+    hoje = date.today().isoformat()
+    execucao_id = database.criar_execucao(DB_PATH, hoje, len(ativos))
+
     inicio = time.time()
     resultados = {}
     erros = []
@@ -262,12 +337,31 @@ def main() -> None:
     for i, (ticker, nome_empresa) in enumerate(ativos, start=1):
         logger.info("[%s] iniciando (%d/%d)", ticker, i, total)
         try:
-            resultados[ticker] = processar_ativo(ticker, nome_empresa)
+            resultado = processar_ativo(ticker, nome_empresa)
+            resultados[ticker] = resultado
+
+            # Salva snapshot no banco
+            analise = resultado.get("analise", {})
+            indicadores = resultado.get("indicadores", {})
+            cotacao = str(indicadores.get("Cotação", ""))
+            classificacao = analise.get("classificacao", {}).get("label", "neutro")
+            database.salvar_snapshot(
+                db_path=DB_PATH,
+                execucao_id=execucao_id,
+                ticker=ticker,
+                nome_empresa=nome_empresa,
+                cotacao=cotacao,
+                indicadores=indicadores,
+                noticias=resultado.get("noticias", []),
+                analise=analise,
+                classificacao=classificacao,
+            )
         except Exception as e:
             logger.error("[%s] falha: %s", ticker, e)
             erros.append(ticker)
 
-    hoje = date.today().isoformat()
+    database.finalizar_execucao(DB_PATH, execucao_id, len(resultados), len(erros))
+
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     DASHBOARD_OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     json_path = OUTPUT_DIR / f"{hoje}.json"
@@ -278,7 +372,7 @@ def main() -> None:
         json.dump(payload, f, ensure_ascii=False, indent=2)
     logger.info("JSON salvo: %s", json_path.name)
 
-    gerar_dashboard(payload, str(TEMPLATE_PATH), str(DASHBOARD_OUTPUT))
+    gerar_dashboard(payload, str(TEMPLATE_PATH), str(DASHBOARD_OUTPUT), DB_PATH)
 
     duracao = time.time() - inicio
     ok = len(ativos) - len(erros)
