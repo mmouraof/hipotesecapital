@@ -32,7 +32,9 @@ Responda EXCLUSIVAMENTE com um JSON puro (sem markdown, sem texto adicional) com
   "resumo_negocio": "parágrafo descrevendo o modelo de negócio e posição competitiva",
   "interpretacao_indicadores": "parágrafo interpretando os indicadores sob a ótica de value investing",
   "indicadores_dashboard": [
-    ... (selecione entre 8 e 12 dos indicadores mais relevantes para value investing)
+    {{"label": "nome exato do indicador", "valor": "valor exato como aparece nos dados brutos"}},
+    {{"label": "...", "valor": "..."}},
+    ... (8 a 12 itens no total, cada um com exatamente as chaves "label" e "valor")
   ],
   "noticias_classificadas": [
     {{
@@ -161,11 +163,18 @@ _VALOR_ALIASES = {"valor", "value", "val", "resultado", "dados"}
 def _normalizar_analise(analise: dict) -> dict:
     """Garante que indicadores_dashboard use sempre as chaves 'label' e 'valor'.
 
-    LLMs ocasionalmente retornam chaves alternativas (name/value, nome/valor,
-    indicador/valor etc.). Esta função normaliza para o formato esperado pelo
-    template HTML sem alterar nenhum outro campo.
+    Trata três formatos que LLMs podem retornar:
+    - Lista de dicts com chaves alternativas: [{name: ..., value: ...}, ...]
+    - Dict plano: {"P/L": "6,20", "ROE": "28%", ...}
+    - Lista de strings: ["P/L: 6,20", ...]  (ignoradas, sem informação estruturada)
     """
     items = analise.get("indicadores_dashboard")
+
+    # Formato dict plano: {"P/L": "6,20", ...} → converter para lista
+    if isinstance(items, dict):
+        items = [{"label": k, "valor": v} for k, v in items.items()]
+        analise["indicadores_dashboard"] = items
+
     if not isinstance(items, list):
         return analise
 
