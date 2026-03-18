@@ -167,13 +167,13 @@ LLMs ocasionalmente retornam texto introdutório, blocos de código markdown (` 
 
 | Variável | Descrição | Obrigatória |
 |---|---|---|
-| `ANTHROPIC_API_KEY` | Chave de API da Anthropic (análise via Claude Sonnet) | Sim |
-| `OPENAI_API_KEY` | Chave de API da OpenAI (fallback de coleta + análise via GPT-4o) | Não* |
+| `ANTHROPIC_API_KEY` | Chave de API da Anthropic (análise via Claude Sonnet + enriquecimento via Haiku) | Sim* |
+| `OPENAI_API_KEY` | Chave de API da OpenAI (análise via GPT-4o + enriquecimento via GPT-mini + fallback de coleta) | Sim* |
 | `GOOGLE_API_KEY` | Chave de API do Google (síntese via Gemini 2.5 Flash) | Não** |
 
-*`OPENAI_API_KEY` habilita três funções independentes: o fallback de coleta de indicadores (quando o scraping falha), a análise via GPT-4o (requer também `GOOGLE_API_KEY`) e o enriquecimento via GPT-4o-mini (segundo fallback de enriquecimento, acionado quando Haiku falha). Coleta e enriquecimento funcionam com `OPENAI_API_KEY` sozinha.
+*Pelo menos uma das duas é obrigatória. Com apenas `ANTHROPIC_API_KEY`: análise via Claude Sonnet, enriquecimento via Haiku. Com apenas `OPENAI_API_KEY`: análise via GPT-4o, enriquecimento via GPT-mini. Com ambas: Claude e GPT-4o analisam em paralelo; se `GOOGLE_API_KEY` também estiver presente, Gemini sintetiza as duas análises.
 
-**Se `GOOGLE_API_KEY` não estiver configurada, a síntese Gemini é desativada e o GPT-4o não é chamado para análise; a análise do Claude é usada diretamente.
+**Se `GOOGLE_API_KEY` não estiver configurada, a síntese Gemini é desativada e GPT-4o não é chamado para análise quando Claude estiver disponível.
 
 ## Lista de Ativos
 

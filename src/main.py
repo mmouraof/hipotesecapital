@@ -240,13 +240,15 @@ def main() -> None:
     """Ponto de entrada do orquestrador."""
     load_dotenv()
 
-    if not os.environ.get("ANTHROPIC_API_KEY"):
-        logger.error("ANTHROPIC_API_KEY não encontrada — configure o .env")
+    if not os.environ.get("ANTHROPIC_API_KEY") and not os.environ.get("OPENAI_API_KEY"):
+        logger.error("Nenhuma chave de análise encontrada — configure ANTHROPIC_API_KEY ou OPENAI_API_KEY no .env")
         sys.exit(1)
+    if not os.environ.get("ANTHROPIC_API_KEY"):
+        logger.warning("ANTHROPIC_API_KEY não encontrada — análise será feita via GPT-4o")
     if not os.environ.get("OPENAI_API_KEY"):
-        logger.warning("OPENAI_API_KEY não encontrada — GPT-4o desativado (fallback de coleta e síntese indisponíveis)")
+        logger.warning("OPENAI_API_KEY não encontrada — GPT-4o desativado (fallback de coleta e enriquecimento GPT-mini indisponíveis)")
     if not os.environ.get("GOOGLE_API_KEY"):
-        logger.warning("GOOGLE_API_KEY não encontrada — síntese Gemini desativada; análise Claude será usada diretamente")
+        logger.warning("GOOGLE_API_KEY não encontrada — síntese Gemini desativada")
 
     ativos_base = carregar_ativos(ATIVOS_PATH)
     ativos = selecionar_ativos(ativos_base, ATIVOS_PATH)

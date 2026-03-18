@@ -401,22 +401,28 @@ def gerar_analise(
     except Exception as e:
         logger.warning("[%s] Claude falhou: %s", ticker, e)
 
-    # ── Etapa 2: GPT-4o (apenas se ambas as chaves estiverem disponíveis) ──
-    # GPT-4o só agrega valor se o Gemini puder sintetizar; sem GOOGLE_API_KEY
-    # ou sem OPENAI_API_KEY a chamada seria desperdiçada.
+    # ── Etapa 2: GPT-4o ────────────────────────────────────────────────────
+    # Chamado quando: Claude falhou (GPT torna-se primário) OU ambas as chaves
+    # estão disponíveis (para síntese Gemini). Sem OPENAI_API_KEY, nunca chamado.
     analise_gpt = None
-    if not os.environ.get("GOOGLE_API_KEY"):
-        logger.info("[%s] GOOGLE_API_KEY ausente — GPT-4o não será chamado", ticker)
-    elif not os.environ.get("OPENAI_API_KEY"):
+    if not os.environ.get("OPENAI_API_KEY"):
         logger.info("[%s] OPENAI_API_KEY ausente — GPT-4o não será chamado", ticker)
-    else:
+    elif analise_claude is None or os.environ.get("GOOGLE_API_KEY"):
         try:
             analise_gpt = _gerar_analise_gpt(ticker, nome_empresa, prompt)
         except Exception as e:
             logger.warning("[%s] GPT-4o falhou: %s", ticker, e)
+    else:
+        logger.info("[%s] GOOGLE_API_KEY ausente e Claude disponível — GPT-4o não será chamado", ticker)
 
+    if analise_claude is None and analise_gpt is None:
+        return {"erro": "Análise falhou — nenhum modelo retornou resultado."}
+
+    # Apenas GPT disponível: enriquece e retorna (Haiku falhará sem ANTHROPIC_API_KEY,
+    # GPT-mini assumirá o enriquecimento)
     if analise_claude is None:
-        return {"erro": "Análise Claude falhou e é obrigatória."}
+        analise_gpt = _tentar_enriquecimento(ticker, nome_empresa, analise_gpt)
+        return _normalizar_analise(analise_gpt)
 
     # Sem análise do GPT, enriquece Claude (Haiku → GPT-mini → sem enriquecimento)
     if analise_gpt is None:
