@@ -202,18 +202,25 @@ def processar_ativo(ticker: str, nome_empresa: str) -> dict:
     noticias = coletar_noticias(ticker, nome_empresa)
     analise = gerar_analise(ticker, nome_empresa, indicadores, noticias)
 
-    # Injeta sentimento e justificativa nas notícias por índice (mesma ordem do prompt)
+    # Injeta sentimento, justificativa e relevância nas notícias por índice
     classificadas = analise.get("noticias_classificadas", [])
     for i, noticia in enumerate(noticias):
         match = classificadas[i] if i < len(classificadas) else {}
         noticia["sentimento"] = match.get("sentimento", "neutro")
         noticia["justificativa"] = match.get("justificativa", "")
+        noticia["relevante"] = match.get("relevante", True)
+
+    # Remove notícias marcadas como não relacionadas ao ativo
+    noticias_filtradas = [n for n in noticias if n.get("relevante", True)]
+    removidas = len(noticias) - len(noticias_filtradas)
+    if removidas:
+        logger.info("[%s] %d notícia(s) removida(s) por irrelevância", ticker, removidas)
 
     return {
         "ticker": ticker,
         "nome_empresa": nome_empresa,
         "indicadores": indicadores,
-        "noticias": noticias,
+        "noticias": noticias_filtradas,
         "analise": analise,
     }
 
@@ -226,8 +233,9 @@ def main() -> None:
         logger.error("ANTHROPIC_API_KEY não encontrada — configure o .env")
         sys.exit(1)
     if not os.environ.get("OPENAI_API_KEY"):
-        logger.error("OPENAI_API_KEY não encontrada — configure o .env")
-        sys.exit(1)
+        logger.warning("OPENAI_API_KEY não encontrada — GPT-4o desativado (fallback de coleta e síntese indisponíveis)")
+    if not os.environ.get("GOOGLE_API_KEY"):
+        logger.warning("GOOGLE_API_KEY não encontrada — síntese Gemini desativada; análise Claude será usada diretamente")
 
     ativos_base = carregar_ativos(ATIVOS_PATH)
     ativos = selecionar_ativos(ativos_base, ATIVOS_PATH)

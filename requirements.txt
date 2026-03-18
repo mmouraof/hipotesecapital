@@ -1,4 +1,7 @@
 anthropic
 openai
+google-genai
+curl_cffi
+beautifulsoup4
 feedparser
 python-dotenv

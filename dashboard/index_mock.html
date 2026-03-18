@@ -16,38 +16,73 @@
 
 <!-- ─── DADOS ──────────────────────────────────────────────────────────────
   Em produção, __DATA_PLACEHOLDER__ é substituído pelo JSON real via gera_dashboard.py.
-  Para testar localmente, comente a linha do placeholder e descomente o bloco MOCK abaixo.
+  Para testar localmente, este arquivo usa dados mock embutidos.
 ──────────────────────────────────────────────────────────────────────────── -->
 <script>
-  // PRODUÇÃO — substituído automaticamente pelo gerador:
-  // const DATA = __DATA_PLACEHOLDER__;
-
-  // MOCK para teste local:
   const DATA = {
-    "data_geracao": "2025-03-17",
+    "data_geracao": "2026-03-18",
     "ativos": {
       "PRIO3": {
         "ticker": "PRIO3",
-        "nome_empresa": "PRIO",
+        "nome_empresa": "PETRORIO",
         "indicadores": {
-          "P/L": 6.2,
-          "P/VP": 1.8,
-          "ROE": "28%",
-          "Dividend Yield": "0%",
-          "Dívida Líquida/EBITDA": 0.4,
-          "Margem Líquida": "38%",
-          "EV/EBITDA": 4.1
+          "Cotação": "62,69",
+          "Data últ cot": "17/03/2026",
+          "Tipo": "ON",
+          "Setor": "Petróleo, Gás e Biocombustíveis",
+          "Subsetor": "Exploração, Refino e Distribuição",
+          "Valor de mercado": "54.696.700.000",
+          "Nro. Ações": "872.495.000",
+          "P/L": "6,20",
+          "P/VP": "1,80",
+          "EV/EBITDA": "4,10",
+          "EV/EBIT": "4,90",
+          "P/EBIT": "4,50",
+          "Div.Yield": "0,00%",
+          "ROE": "28,00%",
+          "ROIC": "18,50%",
+          "Mrg. Líq.": "38,00%",
+          "Mrg. Ebit": "44,00%",
+          "Dív.Bruta/Patrim.": "0,60",
+          "Liq. Corr.": "1,40"
         },
         "noticias": [
-          { "titulo": "PRIO bate recorde de produção no 4T24", "link": "#", "data_publicacao": "2025-03-15", "fonte": "Valor Econômico", "sentimento": "positivo", "justificativa": "Aumento de produção impacta positivamente receita e geração de caixa." },
-          { "titulo": "Petróleo recua com incerteza macro global", "link": "#", "data_publicacao": "2025-03-14", "fonte": "InfoMoney", "sentimento": "negativo", "justificativa": "Queda no preço do barril pressiona margens da companhia." }
+          {
+            "titulo": "PRIO bate recorde de produção no 4T25",
+            "link": "#",
+            "data_publicacao": "2026-03-15",
+            "fonte": "Valor Econômico",
+            "sentimento": "positivo",
+            "justificativa": "Aumento de produção impacta positivamente receita e geração de caixa.",
+            "relevante": true
+          },
+          {
+            "titulo": "Petróleo recua com incerteza macro global",
+            "link": "#",
+            "data_publicacao": "2026-03-14",
+            "fonte": "InfoMoney",
+            "sentimento": "negativo",
+            "justificativa": "Queda no preço do barril pressiona margens da companhia.",
+            "relevante": true
+          }
         ],
         "analise": {
-          "resumo_negocio": "PRIO é uma operadora de petróleo focada em campos maduros offshore, com histórico de crescimento acelerado via aquisições e revitalização de ativos subexplorados.",
-          "interpretacao_indicadores": "P/L de 6,2x indica valuação atrativa para o setor de E&P. ROE de 28% com baixa alavancagem (DN/EBITDA 0,4x) sinaliza excelente qualidade de alocação de capital.",
+          "resumo_negocio": "PRIO é uma operadora de petróleo focada em campos maduros offshore, com histórico de crescimento acelerado via aquisições e revitalização de ativos subexplorados. A companhia se diferencia pela disciplina operacional e pelo baixo custo de extração, posicionando-se como uma das E&Ps mais eficientes da América Latina. Seu portfólio atual concentra-se nos campos Frade, Polvo e Albacora Leste, com planos de expansão orgânica e inorgânica em curso.",
+          "interpretacao_indicadores": "P/L de 6,2x indica valuação atrativa para o setor de E&P. ROE de 28% com baixa alavancagem sinaliza excelente qualidade de alocação de capital. A ausência de dividendos é consistente com a fase de crescimento via aquisições.",
+          "indicadores_dashboard": [
+            { "label": "P/L", "valor": "6,20" },
+            { "label": "P/VP", "valor": "1,80" },
+            { "label": "EV/EBITDA", "valor": "4,10" },
+            { "label": "Div.Yield", "valor": "0,00%" },
+            { "label": "ROE", "valor": "28,00%" },
+            { "label": "ROIC", "valor": "18,50%" },
+            { "label": "Mrg. Líq.", "valor": "38,00%" },
+            { "label": "Mrg. Ebit", "valor": "44,00%" },
+            { "label": "Liq. Corr.", "valor": "1,40" }
+          ],
           "perguntas_investigativas": [
             "Qual é o custo de extração por barril (lifting cost) e como ele evoluiu nos últimos 4 trimestres?",
-            "Quais são os planos de hedge de preço do petróleo para 2025?",
+            "Quais são os planos de hedge de preço do petróleo para 2026?",
             "Há riscos regulatórios relevantes relacionados às licenças dos campos Frade e Albacora?"
           ]
         }
@@ -56,22 +91,52 @@
         "ticker": "ITUB4",
         "nome_empresa": "Itaú Unibanco",
         "indicadores": {
-          "P/L": 9.1,
-          "P/VP": 2.1,
-          "ROE": "22%",
-          "Dividend Yield": "3.4%",
-          "Dívida Líquida/EBITDA": null,
-          "Margem Líquida": "27%",
-          "EV/EBITDA": null
+          "Cotação": "38,45",
+          "Data últ cot": "17/03/2026",
+          "Tipo": "PN",
+          "Setor": "Financeiro e Outros",
+          "Subsetor": "Bancos",
+          "Valor de mercado": "390.000.000.000",
+          "Nro. Ações": "9.789.474.000",
+          "P/L": "9,10",
+          "P/VP": "2,10",
+          "Div.Yield": "3,40%",
+          "ROE": "22,00%",
+          "Mrg. Líq.": "27,00%",
+          "Liq. Corr.": null
         },
         "noticias": [
-          { "titulo": "Itaú anuncia plano de recompra de ações de R$ 4 bi", "link": "#", "data_publicacao": "2025-03-16", "fonte": "Exame", "sentimento": "positivo", "justificativa": "Recompra sinaliza confiança da gestão e melhora o retorno por ação." }
+          {
+            "titulo": "Itaú anuncia plano de recompra de ações de R$ 4 bi",
+            "link": "#",
+            "data_publicacao": "2026-03-16",
+            "fonte": "Exame",
+            "sentimento": "positivo",
+            "justificativa": "Recompra sinaliza confiança da gestão e melhora o retorno por ação.",
+            "relevante": true
+          },
+          {
+            "titulo": "Banco Central mantém Selic em 13,75% ao ano",
+            "link": "#",
+            "data_publicacao": "2026-03-15",
+            "fonte": "G1",
+            "sentimento": "neutro",
+            "justificativa": "Manutenção da Selic preserva spread bancário mas não altera perspectiva de crescimento da carteira de crédito.",
+            "relevante": true
+          }
         ],
         "analise": {
-          "resumo_negocio": "Itaú Unibanco é o maior banco privado da América Latina, com operações diversificadas em varejo, atacado, seguros e gestão de patrimônio.",
+          "resumo_negocio": "Itaú Unibanco é o maior banco privado da América Latina, com operações diversificadas em varejo, atacado, seguros e gestão de patrimônio. A franquia conta com mais de 60 milhões de clientes e presença relevante em países como Chile, Colômbia e Argentina. Sua vantagem competitiva reside na escala operacional, eficiência de custos e capacidade de cross-sell entre produtos financeiros.",
           "interpretacao_indicadores": "ROE consistente de 22% com P/VP de 2,1x é premium justificável pela qualidade da franquia. Dividend Yield de 3,4% mais recompras reforçam a tese de retorno ao acionista.",
+          "indicadores_dashboard": [
+            { "label": "P/L", "valor": "9,10" },
+            { "label": "P/VP", "valor": "2,10" },
+            { "label": "Div.Yield", "valor": "3,40%" },
+            { "label": "ROE", "valor": "22,00%" },
+            { "label": "Mrg. Líq.", "valor": "27,00%" }
+          ],
           "perguntas_investigativas": [
-            "Como a inadimplência (NPL) evoluiu no segmento de crédito ao consumidor em 2024?",
+            "Como a inadimplência (NPL) evoluiu no segmento de crédito ao consumidor em 2025?",
             "Qual o impacto esperado da regulação do crédito rotativo do cartão sobre a margem financeira?",
             "A expansão para América Latina (Chile, Colômbia) está contribuindo positivamente para o ROE consolidado?"
           ]
@@ -81,25 +146,68 @@
         "ticker": "SLCE3",
         "nome_empresa": "SLC Agrícola",
         "indicadores": {
-          "P/L": 7.8,
-          "P/VP": 1.4,
-          "ROE": "18%",
-          "Dividend Yield": "4.1%",
-          "Dívida Líquida/EBITDA": 1.8,
-          "Margem Líquida": "14%",
-          "EV/EBITDA": 5.6
+          "Cotação": "21,30",
+          "Data últ cot": "17/03/2026",
+          "Tipo": "ON",
+          "Setor": "Consumo não Cíclico",
+          "Subsetor": "Agropecuária",
+          "Valor de mercado": "5.200.000.000",
+          "Nro. Ações": "244.131.000",
+          "P/L": "7,80",
+          "P/VP": "1,40",
+          "Div.Yield": "4,10%",
+          "EV/EBITDA": "5,60",
+          "ROE": "18,00%",
+          "Mrg. Líq.": "14,00%",
+          "Dív.Bruta/Patrim.": "1,20",
+          "Liq. Corr.": "1,10"
         },
         "noticias": [
-          { "titulo": "Safra de soja 2024/25 deve superar expectativas no Mato Grosso", "link": "#", "data_publicacao": "2025-03-13", "fonte": "Agência Reuters", "sentimento": "positivo", "justificativa": "Boa safra beneficia diretamente a receita da SLC nas regiões onde opera." },
-          { "titulo": "Dólar fraco preocupa exportadores de grãos", "link": "#", "data_publicacao": "2025-03-12", "fonte": "Broadcast Agro", "sentimento": "negativo", "justificativa": "Apreciação cambial reduz receita em reais para exportações de commodities." }
+          {
+            "titulo": "Safra de soja 2025/26 deve superar expectativas no Mato Grosso",
+            "link": "#",
+            "data_publicacao": "2026-03-13",
+            "fonte": "Agência Reuters",
+            "sentimento": "positivo",
+            "justificativa": "Boa safra beneficia diretamente a receita da SLC nas regiões onde opera.",
+            "relevante": true
+          },
+          {
+            "titulo": "Dólar fraco preocupa exportadores de grãos",
+            "link": "#",
+            "data_publicacao": "2026-03-12",
+            "fonte": "Broadcast Agro",
+            "sentimento": "negativo",
+            "justificativa": "Apreciação cambial reduz receita em reais para exportações de commodities.",
+            "relevante": true
+          },
+          {
+            "titulo": "Petrobras eleva preço da gasolina nas refinarias",
+            "link": "#",
+            "data_publicacao": "2026-03-11",
+            "fonte": "Valor Econômico",
+            "sentimento": "neutro",
+            "justificativa": "Notícia não tem impacto direto nas operações da SLC Agrícola.",
+            "relevante": false
+          }
         ],
         "analise": {
-          "resumo_negocio": "SLC Agrícola é uma das maiores produtoras de grãos do Brasil, operando em modelo de arrendamento de terras com foco em soja, milho e algodão.",
-          "interpretacao_indicadores": "P/L de 7,8x e Dividend Yield de 4,1% são atrativos. A alavancagem de 1,8x DN/EBITDA merece monitoramento dado o ciclo de commodities, mas é administrável com o fluxo de caixa do negócio.",
+          "resumo_negocio": "SLC Agrícola é uma das maiores produtoras de grãos do Brasil, operando em modelo de arrendamento de terras com foco em soja, milho e algodão. A companhia se beneficia de escala operacional e gestão profissional, com área plantada superior a 600 mil hectares distribuída em diversos estados brasileiros. Sua receita é fortemente exposta ao câmbio e ao ciclo de preços de commodities agrícolas.",
+          "interpretacao_indicadores": "P/L de 7,8x e Dividend Yield de 4,1% são atrativos. A alavancagem merece monitoramento dado o ciclo de commodities, mas é administrável com o fluxo de caixa do negócio.",
+          "indicadores_dashboard": [
+            { "label": "P/L", "valor": "7,80" },
+            { "label": "P/VP", "valor": "1,40" },
+            { "label": "EV/EBITDA", "valor": "5,60" },
+            { "label": "Div.Yield", "valor": "4,10%" },
+            { "label": "ROE", "valor": "18,00%" },
+            { "label": "Mrg. Líq.", "valor": "14,00%" },
+            { "label": "Dív.Bruta/Patrim.", "valor": "1,20" },
+            { "label": "Liq. Corr.", "valor": "1,10" }
+          ],
           "perguntas_investigativas": [
             "Qual a estratégia de hedge cambial para a safra atual e como ela protege a margem?",
             "Como o custo de arrendamento de terras evoluiu e qual o impacto na estrutura de custos?",
-            "Há planos de expansão de área plantada para 2025/26 e qual o custo de capital implícito?"
+            "Há planos de expansão de área plantada para 2026/27 e qual o custo de capital implícito?"
           ]
         }
       }
@@ -172,18 +280,24 @@
     buildSidebar(Object.keys(ativos), ticker);
 
     const analise = d.analise || {};
-    const indicadores = d.indicadores || {};
     const noticias = d.noticias || [];
 
-    // Linhas da tabela de indicadores
-    const indKeys = ["P/L", "P/VP", "ROE", "Dividend Yield", "Dívida Líquida/EBITDA", "Margem Líquida", "EV/EBITDA"];
-    const indRows = indKeys.map(k => `
+    // Indicadores selecionados pelo LLM (lista de {label, valor})
+    const indDash = analise.indicadores_dashboard || [];
+
+    // Cotação e data lidas dos dados brutos do scraping (não do LLM)
+    const indicadoresBrutos = d.indicadores || {};
+    const cotacao = indicadoresBrutos["Cotação"];
+    const dataCot = indicadoresBrutos["Data últ cot"];
+
+    // Tabela de indicadores (todos os selecionados — sem cotação/data)
+    const indRows = indDash.map(item => `
       <tr class="border-t border-gray-100">
-        <td class="py-2 pr-4 text-gray-500 text-sm">${k}</td>
-        <td class="py-2 text-sm font-medium">${fmt(indicadores[k])}</td>
+        <td class="py-2 pr-4 text-gray-500 text-sm">${item.label}</td>
+        <td class="py-2 text-sm font-medium">${fmt(item.valor)}</td>
       </tr>`).join("");
 
-    // Notícias com badges
+    // Notícias com badges (já filtradas por relevância no pipeline; mock inclui um exemplo de irrelevante para demonstração)
     const noticiasHtml = noticias.length ? noticias.map(n => {
       const sentimento = n.sentimento || "neutro";
       const badge = `<span class="inline-block text-xs px-2 py-0.5 rounded-full font-medium ${badgeClass(sentimento)}">${sentimento}</span>`;
@@ -208,13 +322,24 @@
         <p class="text-sm text-gray-700">${p}</p>
       </li>`).join("");
 
+    // Cotação em destaque no header (vem dos dados brutos do scraping)
+    const cotacaoHtml = cotacao
+      ? `<div class="ml-auto text-right">
+           <span class="text-2xl font-bold text-indigo-700">R$ ${cotacao}</span>
+           ${dataCot ? `<p class="text-xs text-gray-400 mt-0.5">${dataCot}</p>` : ""}
+         </div>`
+      : "";
+
     $("main-content").innerHTML = `
       <!-- Header do ativo -->
       <div class="mb-6">
-        <div class="flex items-center gap-3">
-          <span class="text-2xl font-bold text-gray-900">${ticker}</span>
-          <span class="text-gray-400 text-lg">·</span>
-          <span class="text-gray-600 text-lg">${d.nome_empresa}</span>
+        <div class="flex items-start gap-3">
+          <div>
+            <span class="text-2xl font-bold text-gray-900">${ticker}</span>
+            <span class="text-gray-400 text-lg mx-2">·</span>
+            <span class="text-gray-600 text-lg">${d.nome_empresa}</span>
+          </div>
+          ${cotacaoHtml}
         </div>
       </div>
 
@@ -230,9 +355,10 @@
         <!-- Indicadores -->
         <div class="bg-white rounded-xl border border-gray-200 p-5">
           <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Indicadores Fundamentalistas</h2>
-          <table class="w-full mb-4">
-            <tbody>${indRows}</tbody>
-          </table>
+          ${indRows
+            ? `<table class="w-full mb-4"><tbody>${indRows}</tbody></table>`
+            : '<p class="text-sm text-gray-400 mb-4">Indicadores não disponíveis.</p>'
+          }
           <p class="text-sm text-gray-700 leading-relaxed border-t border-gray-100 pt-4">${analise.interpretacao_indicadores || "—"}</p>
         </div>
 

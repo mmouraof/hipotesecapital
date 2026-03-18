@@ -32,7 +32,8 @@ Abra o `.env` e substitua os valores placeholder pelas suas chaves:
 
 ```
 ANTHROPIC_API_KEY=sk-ant-sua-chave-aqui
-OPENAI_API_KEY=sk-sua-chave-aqui
+OPENAI_API_KEY=sk-sua-chave-aqui   # opcional
+GOOGLE_API_KEY=sua-chave-aqui      # opcional
 ```
 
 > **Segurança:** O arquivo `.env` está no `.gitignore` e nunca será commitado. Nunca compartilhe sua chave diretamente no código ou em commits.
@@ -87,9 +88,9 @@ hipotese-capital/
 │   └── output/                 # JSONs gerados (um por execução)
 ├── src/
 │   ├── main.py                 # Orquestrador principal
-│   ├── coleta_indicadores.py   # Extração de indicadores via web_search (API OpenAI)
+│   ├── coleta_indicadores.py   # Scraping do Fundamentus + fallback GPT-4o
 │   ├── coleta_noticias.py      # Coleta de notícias via RSS (Google News)
-│   ├── analise_llm.py          # Geração de resumos e insights via API Claude
+│   ├── analise_llm.py          # Análise e seleção de indicadores via Claude
 │   └── gera_dashboard.py       # Injeta dados no template HTML
 └── dashboard/
     ├── template.html           # Template com placeholder para dados
@@ -100,11 +101,41 @@ hipotese-capital/
 ### Fluxo de dados
 
 ```
-ativos.txt → coleta_indicadores.py (OpenAI web_search) → indicadores em JSON
-           → coleta_noticias.py (RSS)                  → notícias em JSON
-           → analise_llm.py (Claude API)               → resumos e insights
-           → data/output/YYYY-MM-DD.json               → dashboard/output/index.html
+ativos.txt → coleta_indicadores.py  (scraping Fundamentus → Investidor10 → GPT-4o)
+                                     → indicadores completos em JSON
+           → coleta_noticias.py     (RSS Google News)
+                                     → notícias em JSON
+           → analise_llm.py         (Claude Sonnet  → análise A)
+                                     (GPT-4o         → análise B)
+                                     (Gemini 2.5 Flash → síntese de A+B)
+                                     → análise final + indicadores_dashboard selecionados
+           → data/output/YYYY-MM-DD.json
+           → dashboard/output/index.html
 ```
+
+### Coleta de indicadores
+
+A coleta segue uma estratégia em três estágios:
+
+1. **Scraping do Fundamentus (primário):** extrai diretamente a página `fundamentus.com.br/detalhes.php` via `curl_cffi` + `BeautifulSoup`. O `curl_cffi` impersona o TLS do Chrome, contornando a proteção Cloudflare que bloqueia bibliotecas HTTP convencionais (`requests`, `httpx`) quando executadas em IPs de datacenter — como GitHub Codespaces, Google Cloud Run ou AWS. Retorna o conjunto completo de indicadores: cotação, valuation (P/L, P/VP, EV/EBITDA…), rentabilidade (ROE, ROIC, margens…), balanço patrimonial e demonstrativo de resultados.
+
+2. **Scraping do Investidor10 (fallback):** acionado se o Fundamentus falhar. Extrai os cards do topo (cotação, P/L, P/VP, DY), indicadores fundamentalistas com comparativos por setor/subsetor, histórico de dividendos e informações cadastrais da empresa. Também usa `curl_cffi` para contornar eventuais bloqueios.
+
+3. **GPT-4o com web search (último recurso):** acionado se ambos os scrapings falharem e `OPENAI_API_KEY` estiver configurada. Usa a Responses API da OpenAI com `web_search_preview` para buscar os mesmos indicadores em B3, Fundamentus, Status Invest e Yahoo Finance, com limite de tokens para controle de custo.
+
+### Análise em três modelos
+
+A etapa de análise executa um pipeline de três modelos em sequência:
+
+1. **Claude Sonnet** e **GPT-4o** recebem o mesmo prompt de análise de forma independente, cada um produzindo: resumo do negócio, interpretação dos indicadores, seleção de indicadores para o dashboard, classificação de sentimento das notícias e perguntas investigativas.
+
+2. **Gemini 2.5 Flash** recebe as duas análises e as sintetiza — sem gerar dados novos. Sua única função é selecionar e combinar o melhor conteúdo já produzido: resume o negócio em exatamente 3 frases, escolhe a interpretação mais precisa entre os dois modelos, copia o `indicadores_dashboard` do Claude sem alteração (pois vem de dados reais do scraping), seleciona o sentimento mais bem fundamentado para cada notícia e escolhe as 3 perguntas mais relevantes e distintas entre as 6 disponíveis.
+
+Se GPT-4o ou Gemini falharem, o pipeline degrada graciosamente: se apenas um dos dois modelos de análise funcionar, o resultado é usado diretamente; se o Gemini falhar, a análise do Claude é retornada sem síntese.
+
+### Seleção de indicadores para o dashboard
+
+Claude e GPT-4o recebem o conjunto bruto completo de indicadores (incluindo DRE e balanço) e cada um seleciona entre 8 e 12 dos mais relevantes para value investing. A cotação e a data base são sempre incluídas como primeiros itens. O Gemini preserva a seleção do Claude no campo `indicadores_dashboard`, que é exibido diretamente no dashboard — sem lista fixa hardcoded no frontend.
 
 ### Decisões técnicas
 
@@ -114,26 +145,40 @@ O avaliador abre o arquivo no navegador sem instalar nada e sem rodar um servido
 **Por que RSS para notícias em vez de web scraping?**
 Google News RSS é gratuito, estável e não requer parsing de HTML frágil. Retorna título, link, data e fonte. A classificação de sentimento é feita pelo LLM na etapa de análise, não na coleta.
 
-**Por que duas APIs diferentes (OpenAI e Anthropic)?**
-A OpenAI (`gpt-4o` com `web_search_preview`) é usada na coleta de indicadores por ter acesso nativo à web via Responses API. O Claude (`claude-sonnet-4-6`) é usado na análise por sua capacidade de raciocínio estruturado e geração de JSON confiável. Cada chamada tem responsabilidade única, o que facilita substituição ou ajuste individual.
+**Por que três modelos diferentes (Claude, GPT-4o e Gemini)?**
+Cada modelo tem pontos fortes distintos na análise textual; usar dois modelos independentes para a análise e um terceiro para arbitrar e sintetizar reduz vieses individuais e tende a produzir textos mais equilibrados. O Gemini atua como editor — não como analista —, garantindo que nenhum dado seja fabricado fora dos dados de mercado coletados. O GPT-4o também serve como fallback de coleta de indicadores quando o scraping falha, aproveitando sua integração nativa com web search.
+
+**Por que `curl_cffi` em vez de `requests` para o scraping?**
+O Fundamentus é protegido por Cloudflare, que bloqueia requisições HTTP comuns vindas de IPs de datacenter com um desafio 403. O `curl_cffi` impersona o fingerprint TLS do Chrome, fazendo a requisição parecer um navegador real e contornando o bloqueio sem necessidade de Selenium ou Playwright.
+
+**Como o pipeline lida com respostas fora do formato esperado do LLM?**
+LLMs ocasionalmente retornam texto introdutório, blocos de código markdown (` ```json `) ou comentários após o JSON, mesmo quando instruídos a não fazê-lo. Em vez de depender de heurísticas frágeis como `startswith("```")`, o parser usa `re.search(r"\{.*\}", texto, re.DOTALL)` para extrair o bloco JSON mais externo da resposta completa, ignorando qualquer conteúdo antes ou depois das chaves. Se nenhum bloco for encontrado, a exceção é capturada e o ativo é marcado com `{"erro": ...}` sem interromper o pipeline dos demais.
 
 ## Variáveis de Ambiente
 
 | Variável | Descrição | Obrigatória |
 |---|---|---|
-| `ANTHROPIC_API_KEY` | Chave de API da Anthropic (análise via Claude) | Sim |
-| `OPENAI_API_KEY` | Chave de API da OpenAI (coleta de indicadores via GPT-4o) | Sim |
+| `ANTHROPIC_API_KEY` | Chave de API da Anthropic (análise via Claude Sonnet) | Sim |
+| `OPENAI_API_KEY` | Chave de API da OpenAI (fallback de coleta + análise via GPT-4o) | Não* |
+| `GOOGLE_API_KEY` | Chave de API do Google (síntese via Gemini 2.5 Flash) | Não** |
+
+*`OPENAI_API_KEY` habilita duas funções independentes: o fallback de coleta de indicadores (quando o scraping falha) e a análise via GPT-4o. A análise GPT-4o só é executada se `GOOGLE_API_KEY` também estiver presente, pois sem o Gemini para sintetizar a chamada seria desperdiçada. O fallback de coleta funciona com `OPENAI_API_KEY` sozinha.
+
+**Se `GOOGLE_API_KEY` não estiver configurada, a síntese Gemini é desativada e o GPT-4o não é chamado para análise; a análise do Claude é usada diretamente.
 
 ## Lista de Ativos
 
-Os tickers monitorados estão em `data/ativos.txt` no formato `TICKER|Nome da Empresa`. Para adicionar ou remover ativos, edite esse arquivo.
+Os tickers monitorados estão em `data/ativos.txt` no formato `TICKER|Nome da Empresa`. Para adicionar ou remover ativos, edite esse arquivo ou use a etapa interativa no terminal ao executar `main.py`.
 
 ## Dependências
 
 Definidas em `requirements.txt`:
 
-- `anthropic` — SDK oficial da API Claude (análise)
-- `openai` — SDK oficial da API OpenAI (coleta de indicadores)
+- `anthropic` — SDK oficial da API Claude (análise fundamentalista)
+- `openai` — SDK oficial da API OpenAI (análise GPT-4o + fallback de coleta)
+- `google-generativeai` — SDK oficial do Google (síntese via Gemini 2.5 Flash)
+- `curl_cffi` — Requisições HTTP com impersonação de TLS do Chrome (contorna Cloudflare no Fundamentus)
+- `beautifulsoup4` — Parsing do HTML do Fundamentus
 - `feedparser` — Parsing de feeds RSS
 - `python-dotenv` — Carregamento de variáveis do `.env`
 

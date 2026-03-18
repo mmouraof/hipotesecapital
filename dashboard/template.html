@@ -83,15 +83,21 @@
     buildSidebar(Object.keys(ativos), ticker);
 
     const analise = d.analise || {};
-    const indicadores = d.indicadores || {};
     const noticias = d.noticias || [];
 
-    // Linhas da tabela de indicadores — lista fixa coletada pela OpenAI
-    const indKeys = ["P/L", "P/VP", "ROE", "Dividend Yield", "Dívida Líquida/EBITDA", "Margem Líquida"];
-    const indRows = indKeys.map(k => `
+    // Indicadores selecionados pelo LLM (lista de {label, valor})
+    const indDash = analise.indicadores_dashboard || [];
+
+    // Cotação e data lidas dos dados brutos do scraping (não do LLM)
+    const indicadoresBrutos = d.indicadores || {};
+    const cotacao = indicadoresBrutos["Cotação"];
+    const dataCot = indicadoresBrutos["Data últ cot"];
+
+    // Tabela de indicadores (todos os selecionados — sem cotação/data)
+    const indRows = indDash.map(item => `
       <tr class="border-t border-gray-100">
-        <td class="py-2 pr-4 text-gray-500 text-sm">${k}</td>
-        <td class="py-2 text-sm font-medium">${fmt(indicadores[k])}</td>
+        <td class="py-2 pr-4 text-gray-500 text-sm">${item.label}</td>
+        <td class="py-2 text-sm font-medium">${fmt(item.valor)}</td>
       </tr>`).join("");
 
     // Notícias com badges
@@ -119,13 +125,24 @@
         <p class="text-sm text-gray-700">${p}</p>
       </li>`).join("");
 
+    // Cotação em destaque no header (vem dos dados brutos do scraping)
+    const cotacaoHtml = cotacao
+      ? `<div class="ml-auto text-right">
+           <span class="text-2xl font-bold text-indigo-700">R$ ${cotacao}</span>
+           ${dataCot ? `<p class="text-xs text-gray-400 mt-0.5">${dataCot}</p>` : ""}
+         </div>`
+      : "";
+
     $("main-content").innerHTML = `
       <!-- Header do ativo -->
       <div class="mb-6">
-        <div class="flex items-center gap-3">
-          <span class="text-2xl font-bold text-gray-900">${ticker}</span>
-          <span class="text-gray-400 text-lg">·</span>
-          <span class="text-gray-600 text-lg">${d.nome_empresa}</span>
+        <div class="flex items-start gap-3">
+          <div>
+            <span class="text-2xl font-bold text-gray-900">${ticker}</span>
+            <span class="text-gray-400 text-lg mx-2">·</span>
+            <span class="text-gray-600 text-lg">${d.nome_empresa}</span>
+          </div>
+          ${cotacaoHtml}
         </div>
       </div>
 
@@ -141,9 +158,10 @@
         <!-- Indicadores -->
         <div class="bg-white rounded-xl border border-gray-200 p-5">
           <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Indicadores Fundamentalistas</h2>
-          <table class="w-full mb-4">
-            <tbody>${indRows}</tbody>
-          </table>
+          ${indRows
+            ? `<table class="w-full mb-4"><tbody>${indRows}</tbody></table>`
+            : '<p class="text-sm text-gray-400 mb-4">Indicadores não disponíveis.</p>'
+          }
           <p class="text-sm text-gray-700 leading-relaxed border-t border-gray-100 pt-4">${analise.interpretacao_indicadores || "—"}</p>
         </div>
 
