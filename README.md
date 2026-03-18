@@ -130,7 +130,7 @@ A etapa de análise executa um pipeline de três modelos em sequência:
 
 2. **Gemini 2.5 Flash** recebe as duas análises e as sintetiza — sem gerar dados novos. Sua única função é selecionar e combinar o melhor conteúdo já produzido: resume o negócio em exatamente 3 frases, divide a interpretação dos indicadores em 3 seções temáticas (Valuation, Rentabilidade, Endividamento), classifica o ativo como *atrativo*, *neutro* ou *cautela* com justificativa, copia o `indicadores_dashboard` do Claude sem alteração (pois vem de dados reais do scraping), seleciona o sentimento mais bem fundamentado para cada notícia e escolhe as 3 perguntas mais relevantes e distintas entre as 6 disponíveis.
 
-Se GPT-4o ou Gemini falharem, o pipeline degrada graciosamente: se apenas um dos dois modelos de análise funcionar, o resultado é enriquecido por um modelo **Claude Haiku** (leve e barato) que adiciona a classificação semáforo e reestrutura a interpretação em 3 seções sem gerar dados novos. Se o enriquecimento Haiku também falhar, a análise do Claude é retornada no formato original.
+Se GPT-4o ou Gemini falharem, o pipeline degrada graciosamente seguindo a ordem de preferência para o enriquecimento: **Gemini 2.5 Flash** (síntese completa) → **Claude Haiku** (enriquecimento leve) → **GPT-4o-mini** (enriquecimento leve, acionado se Haiku falhar e `OPENAI_API_KEY` estiver disponível) → análise Claude no formato original (sem classificação nem sub-seções). O enriquecimento leve (Haiku ou GPT-mini) adiciona apenas a classificação semáforo e a divisão da interpretação em 3 seções temáticas, sem gerar dados novos.
 
 ### Seleção de indicadores para o dashboard
 
@@ -171,7 +171,7 @@ LLMs ocasionalmente retornam texto introdutório, blocos de código markdown (` 
 | `OPENAI_API_KEY` | Chave de API da OpenAI (fallback de coleta + análise via GPT-4o) | Não* |
 | `GOOGLE_API_KEY` | Chave de API do Google (síntese via Gemini 2.5 Flash) | Não** |
 
-*`OPENAI_API_KEY` habilita duas funções independentes: o fallback de coleta de indicadores (quando o scraping falha) e a análise via GPT-4o. A análise GPT-4o só é executada se `GOOGLE_API_KEY` também estiver presente, pois sem o Gemini para sintetizar a chamada seria desperdiçada. O fallback de coleta funciona com `OPENAI_API_KEY` sozinha.
+*`OPENAI_API_KEY` habilita três funções independentes: o fallback de coleta de indicadores (quando o scraping falha), a análise via GPT-4o (requer também `GOOGLE_API_KEY`) e o enriquecimento via GPT-4o-mini (segundo fallback de enriquecimento, acionado quando Haiku falha). Coleta e enriquecimento funcionam com `OPENAI_API_KEY` sozinha.
 
 **Se `GOOGLE_API_KEY` não estiver configurada, a síntese Gemini é desativada e o GPT-4o não é chamado para análise; a análise do Claude é usada diretamente.
 

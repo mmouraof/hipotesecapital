@@ -256,6 +256,66 @@ def _enriquecer_analise_haiku(
     return analise_claude
 
 
+def _enriquecer_analise_gpt_mini(
+    ticker: str,
+    nome_empresa: str,
+    analise_claude: dict,
+) -> dict:
+    """Chama gpt-4o-mini para adicionar classificacao e reestruturar
+    interpretacao_indicadores em 3 seções, sem alterar os outros campos.
+
+    Usado como segundo fallback de enriquecimento quando Haiku falha e
+    OPENAI_API_KEY está disponível.
+    """
+    interpretacao = analise_claude.get("interpretacao_indicadores", "")
+    resumo = analise_claude.get("resumo_negocio", "")
+    if isinstance(interpretacao, list):
+        return analise_claude
+
+    prompt = _PROMPT_ENRIQUECIMENTO.format(
+        ticker=ticker,
+        nome_empresa=nome_empresa,
+        resumo=resumo,
+        interpretacao=interpretacao,
+    )
+
+    client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        max_tokens=1024,
+        messages=[{"role": "user", "content": prompt}],
+    )
+    enriquecimento = _extrair_json(response.choices[0].message.content.strip())
+    analise_claude["classificacao"] = enriquecimento["classificacao"]
+    analise_claude["interpretacao_indicadores"] = enriquecimento["interpretacao_indicadores"]
+    logger.info("[%s] enriquecimento GPT-mini gerado", ticker)
+    return analise_claude
+
+
+def _tentar_enriquecimento(
+    ticker: str,
+    nome_empresa: str,
+    analise_claude: dict,
+) -> dict:
+    """Tenta enriquecer a análise do Claude com classificacao e interpretacao em seções.
+
+    Ordem de preferência: Haiku → GPT-mini → sem enriquecimento (retorna como está).
+    """
+    try:
+        return _enriquecer_analise_haiku(ticker, nome_empresa, analise_claude)
+    except Exception as e:
+        logger.warning("[%s] Haiku enriquecimento falhou (%s)", ticker, e)
+
+    if os.environ.get("OPENAI_API_KEY"):
+        try:
+            return _enriquecer_analise_gpt_mini(ticker, nome_empresa, analise_claude)
+        except Exception as e:
+            logger.warning("[%s] GPT-mini enriquecimento falhou (%s)", ticker, e)
+
+    logger.warning("[%s] todos os modelos de enriquecimento falharam — retornando Claude sem enriquecimento", ticker)
+    return analise_claude
+
+
 def _sintetizar_gemini(
     ticker: str,
     nome_empresa: str,
@@ -358,12 +418,9 @@ def gerar_analise(
     if analise_claude is None:
         return {"erro": "Análise Claude falhou e é obrigatória."}
 
-    # Sem análise do GPT, enriquece Claude com Haiku e retorna diretamente
+    # Sem análise do GPT, enriquece Claude (Haiku → GPT-mini → sem enriquecimento)
     if analise_gpt is None:
-        try:
-            analise_claude = _enriquecer_analise_haiku(ticker, nome_empresa, analise_claude)
-        except Exception as e:
-            logger.warning("[%s] Haiku enriquecimento falhou (%s) — retornando Claude sem enriquecimento", ticker, e)
+        analise_claude = _tentar_enriquecimento(ticker, nome_empresa, analise_claude)
         return _normalizar_analise(analise_claude)
 
     # ── Etapa 3: Gemini 2.5 Flash — síntese ───────────────────────────────
@@ -371,9 +428,6 @@ def gerar_analise(
     try:
         return _normalizar_analise(_sintetizar_gemini(ticker, nome_empresa, analise_claude, analise_gpt))
     except Exception as e:
-        logger.warning("[%s] Gemini falhou (%s) — enriquecendo com Haiku", ticker, e)
-        try:
-            analise_claude = _enriquecer_analise_haiku(ticker, nome_empresa, analise_claude)
-        except Exception as e2:
-            logger.warning("[%s] Haiku enriquecimento falhou (%s) — retornando Claude sem enriquecimento", ticker, e2)
+        logger.warning("[%s] Gemini falhou (%s) — tentando enriquecimento", ticker, e)
+        analise_claude = _tentar_enriquecimento(ticker, nome_empresa, analise_claude)
         return _normalizar_analise(analise_claude)
