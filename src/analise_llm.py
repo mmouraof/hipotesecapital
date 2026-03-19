@@ -29,8 +29,8 @@ Empresa: {nome_empresa}
 ## Instrução
 Responda EXCLUSIVAMENTE com um JSON puro (sem markdown, sem texto adicional) com a seguinte estrutura:
 {{
-  "resumo_negocio": "parágrafo descrevendo o modelo de negócio e posição competitiva",
-  "interpretacao_indicadores": "parágrafo interpretando os indicadores sob a ótica de value investing",
+  "resumo_negocio": "Seja detalhado quando os dados permitirem (3+ frases). Descreva o modelo de negócio, posição competitiva, principais vantagens e riscos do negócio",
+  "interpretacao_indicadores": "Seja detalhado quando os dados permitirem (3+ frases). Interprete os indicadores sob a ótica de value investing, comparando com benchmarks do setor e explicando o que cada múltiplo revela sobre a qualidade do negócio",
   "indicadores_dashboard": [
     {{"label": "nome exato do indicador", "valor": "valor exato como aparece nos dados brutos"}},
     {{"label": "...", "valor": "..."}},
@@ -59,10 +59,11 @@ REGRAS para indicadores_dashboard:
 - Use os valores exatamente como aparecem nos dados brutos (não reformate nem calcule)
 
 REGRAS para noticias_classificadas:
-- Inclua TODAS as notícias listadas acima, uma por uma, na mesma ordem
-- Para cada notícia, defina "relevante": true se a notícia tratar diretamente de {ticker} ou {nome_empresa}; false se for sobre outro ativo, setor geral ou tema sem relação direta com a empresa
-- O campo "justificativa" é OBRIGATÓRIO em todos os itens — nunca retorne string vazia ou null
-- Prefira "positivo" ou "negativo" sempre que o título indicar qualquer tendência; reserve "neutro" para notícias genuinamente sem impacto identificável"""
+- DESCARTE completamente notícias que não tenham NENHUMA relação com {ticker}, {nome_empresa} ou seu setor de atuação — NÃO as inclua no JSON
+- Marque "relevante": true para notícias que tratem diretamente de {ticker} ou {nome_empresa}
+- Marque "relevante": false SOMENTE para notícias de contexto setorial ou cujo impacto no ativo seja inconclusivo — essas serão exibidas como "Outras menções"
+- O campo "justificativa" é OBRIGATÓRIO em todos os itens incluídos — nunca retorne string vazia ou null
+- Prefira "positivo" ou "negativo" sempre que o título ou snippet indicar qualquer tendência; reserve "neutro" para notícias genuinamente sem impacto identificável"""
 
 
 _PROMPT_SINTESE = """Você é um editor sênior de análises financeiras de value investing. Receberá duas análises independentes do mesmo ativo, produzidas por modelos de linguagem diferentes.
@@ -86,11 +87,11 @@ Responda EXCLUSIVAMENTE com um JSON puro (sem markdown, sem texto adicional) com
     "label": "atrativo ou neutro ou cautela — escolha com base nos indicadores e análises disponíveis",
     "razao": "uma frase objetiva explicando o principal fator da classificação"
   }},
-  "resumo_negocio": "síntese em EXATAMENTE 3 frases, combinando os pontos mais relevantes das análises A e B — sem adicionar dados novos",
+  "resumo_negocio": "síntese detalhada combinando os pontos mais relevantes das análises A e B — sem adicionar dados novos",
   "interpretacao_indicadores": [
-    {{"titulo": "Valuation", "texto": "parágrafo sobre múltiplos de valuation (P/L, P/VP, EV/EBITDA etc.) — extraído ou combinado das análises A e B, sem dados novos"}},
-    {{"titulo": "Rentabilidade", "texto": "parágrafo sobre rentabilidade e margens (ROE, ROIC, Mrg. Líq., Mrg. Ebit etc.) — extraído ou combinado das análises A e B, sem dados novos"}},
-    {{"titulo": "Endividamento", "texto": "parágrafo sobre estrutura de capital e endividamento (Dív.Líq./EBITDA, Dívida Bruta, Patrimônio Líquido etc.) — extraído ou combinado das análises A e B, sem dados novos"}}
+    {{"titulo": "Valuation", "texto": "Seja detalhado quando os dados permitirem (3+ frases). Analise os múltiplos de valuation (P/L, P/VP, EV/EBITDA etc.), compare com a média do setor e indique se o ativo parece descontado ou caro — extraído ou combinado das análises A e B, sem dados novos"}},
+    {{"titulo": "Rentabilidade", "texto": "Seja detalhado quando os dados permitirem (3+ frases). Analise a rentabilidade e margens (ROE, ROIC, Mrg. Líq., Mrg. Ebit etc.), comente tendência e qualidade dos retornos — extraído ou combinado das análises A e B, sem dados novos"}},
+    {{"titulo": "Endividamento", "texto": "Seja detalhado quando os dados permitirem (3+ frases). Analise a estrutura de capital (Dív.Líq./EBITDA, Dívida Bruta, Patrimônio Líquido etc.), avalie risco de solvência e capacidade de investimento — extraído ou combinado das análises A e B, sem dados novos"}}
   ],
   "indicadores_dashboard": {indicadores_dashboard_json},
   "noticias_classificadas": [
@@ -136,9 +137,9 @@ Responda EXCLUSIVAMENTE com JSON puro (sem markdown, sem texto adicional):
     "razao": "uma frase objetiva explicando o principal fator"
   }},
   "interpretacao_indicadores": [
-    {{"titulo": "Valuation", "texto": "parágrafo sobre múltiplos de valuation extraído do texto original"}},
-    {{"titulo": "Rentabilidade", "texto": "parágrafo sobre rentabilidade e margens extraído do texto original"}},
-    {{"titulo": "Endividamento", "texto": "parágrafo sobre estrutura de capital e endividamento extraído do texto original"}}
+    {{"titulo": "Valuation", "texto": "Seja detalhado quando os dados permitirem (3+ frases). Analise múltiplos de valuation, compare com setor e indique se parece descontado ou caro — extraído do texto original"}},
+    {{"titulo": "Rentabilidade", "texto": "Seja detalhado quando os dados permitirem (3+ frases). Analise rentabilidade e margens, comente tendência e qualidade dos retornos — extraído do texto original"}},
+    {{"titulo": "Endividamento", "texto": "Seja detalhado quando os dados permitirem (3+ frases). Analise estrutura de capital, avalie risco de solvência e capacidade de investimento — extraído do texto original"}}
   ]
 }}
 

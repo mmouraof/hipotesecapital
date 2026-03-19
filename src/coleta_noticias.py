@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 def coletar_noticias(
-    ticker: str, nome_empresa: str, max_noticias: int = 5
+    ticker: str, nome_empresa: str, max_noticias: int = 10
 ) -> list[dict]:
     """Coleta notícias recentes de um ativo via RSS do Google News.
 
@@ -21,7 +21,7 @@ def coletar_noticias(
     Args:
         ticker: Código do ativo (ex: "PRIO3").
         nome_empresa: Nome da empresa (ex: "PRIO").
-        max_noticias: Número máximo de notícias a retornar. Default: 5.
+        max_noticias: Número máximo de notícias a retornar. Default: 10.
 
     Returns:
         Lista de dicts com as chaves: titulo, link, data_publicacao, fonte.

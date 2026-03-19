@@ -602,6 +602,7 @@
 
   function fmt(val) {
     if (val === null || val === undefined) return '<span class="text-gray-400">—</span>';
+    if (typeof val === "object") return '<span class="text-gray-400">—</span>';
     return `<span>${val}</span>`;
   }
 
@@ -660,6 +661,7 @@
       const analise = d.analise || {};
       const clas = analise.classificacao || {};
       const cotacao = (d.indicadores || {})["Cotação"] || "—";
+      const setor = (d.indicadores || {})["Setor"] || "—";
       const resumoTexto = clas.razao || "—";
       const ind = d.indicadores || {};
       const dash = (d.analise || {}).indicadores_dashboard || [];
@@ -678,6 +680,7 @@
         <tr class="border-t border-gray-100 hover:bg-gray-50 cursor-pointer" onclick="renderAtivo('${ticker}')">
           <td class="py-3 pl-4 pr-3 font-semibold text-indigo-700 text-sm whitespace-nowrap">${ticker}</td>
           <td class="py-3 pr-3 text-sm text-gray-700 whitespace-nowrap">${d.nome_empresa || ""}</td>
+          <td class="py-3 pr-3 text-sm text-gray-500 whitespace-nowrap hidden lg:table-cell">${setor}</td>
           <td class="py-3 pr-3 text-sm font-medium text-gray-900 whitespace-nowrap">R$ ${cotacao}</td>
           <td class="py-3 pr-3 text-sm text-gray-700 whitespace-nowrap hidden sm:table-cell">${pl}</td>
           <td class="py-3 pr-3 text-sm text-gray-700 whitespace-nowrap hidden sm:table-cell">${dy}</td>
@@ -698,6 +701,7 @@
               <tr class="bg-gray-50">
                 <th class="pl-4 pr-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Ticker</th>
                 <th class="pr-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Empresa</th>
+                <th class="pr-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider hidden lg:table-cell">Setor</th>
                 <th class="pr-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Cotação</th>
                 <th class="pr-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider hidden sm:table-cell">P/L</th>
                 <th class="pr-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider hidden sm:table-cell">Div. Yield</th>
@@ -826,7 +830,10 @@
       </div>
       <div class="space-y-5">
         <div class="bg-white rounded-xl border border-gray-200 p-5">
-          <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Resumo do Negócio</h2>
+          <div class="flex items-center gap-3 mb-3">
+            <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Resumo do Negócio</h2>
+            ${indicadoresBrutos["Setor"] ? `<span class="text-xs text-gray-400 border border-gray-200 rounded-full px-2 py-0.5">${indicadoresBrutos["Setor"]}</span>` : ""}
+          </div>
           <p class="text-sm text-gray-700 leading-relaxed">${analise.resumo_negocio || "—"}</p>
         </div>
         <div class="bg-white rounded-xl border border-gray-200 p-5">
@@ -868,6 +875,27 @@
     buildSidebar(tickers, null, "historico");
 
     let entries = [];
+    const dataGeracao = DATA.data_geracao || "";
+
+    for (const ticker of tickers) {
+      if (_histTicker && ticker !== _histTicker) continue;
+      if (_histData   && dataGeracao !== _histData) continue;
+      const ativo = ativos[ticker];
+      const ind = ativo.indicadores || {};
+      function findInd(keys) { for (const k of keys) { if (ind[k]) return ind[k]; } return "—"; }
+      entries.push({
+        ticker,
+        nome_empresa: ativo.nome_empresa || ticker,
+        data: dataGeracao,
+        cotacao: ind["Cotação"] || "—",
+        classificacao: ((ativo.analise || {}).classificacao || {}).label || "neutro",
+        pl: findInd(["P/L"]),
+        dy: findInd(["Div. Yield", "Div.Yield", "DY", "Dividend Yield"]),
+        indicadores: ind,
+        analise: ativo.analise || {},
+      });
+    }
+
     for (const ticker of tickers) {
       const snaps = histComp[ticker] || [];
       const nomeEmpresa = (ativos[ticker] || {}).nome_empresa || ticker;
@@ -911,7 +939,7 @@
     $("main-content").innerHTML = `
       <div class="mb-6">
         <h1 class="text-xl font-bold text-gray-900">Explorar Histórico</h1>
-        <p class="text-sm text-gray-400 mt-0.5">Consulte análises e indicadores de execuções anteriores.</p>
+        <p class="text-sm text-gray-400 mt-0.5">Consulte análises e indicadores de todas as execuções.</p>
       </div>
       <div class="bg-white rounded-xl border border-gray-200 p-4 mb-5">
         <div class="flex flex-wrap gap-5 items-start">
@@ -998,7 +1026,7 @@
     const indicadoresBrutos = entry.indicadores || {};
 
     const indBrutoRows = Object.entries(indicadoresBrutos)
-      .filter(([k]) => !["Ticker", "Nome", "ticker"].includes(k))
+      .filter(([k, v]) => !["Ticker", "Nome", "ticker"].includes(k) && typeof v !== "object")
       .map(([k, v]) => `
         <tr class="border-t border-gray-100">
           <td class="py-1.5 pr-4 text-gray-500 text-xs">${k}</td>
