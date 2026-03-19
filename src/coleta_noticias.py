@@ -1,6 +1,7 @@
 """Módulo de coleta de notícias via RSS do Google News."""
 
 import logging
+import re
 from datetime import datetime
 from urllib.parse import quote
 
@@ -48,12 +49,18 @@ def coletar_noticias(
             elif hasattr(entry, "tags") and entry.tags:
                 fonte = entry.tags[0].get("term", "")
 
+            # Google News inclui um snippet HTML no campo summary;
+            # extraímos apenas o texto limpo para contexto da análise LLM
+            snippet_raw = entry.get("summary", "")
+            snippet = re.sub(r"<[^>]+>", "", snippet_raw).strip()
+
             noticias.append(
                 {
                     "titulo": entry.get("title", ""),
                     "link": entry.get("link", ""),
                     "data_publicacao": data_pub,
                     "fonte": fonte,
+                    "snippet": snippet,
                 }
             )
 

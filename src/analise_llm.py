@@ -188,6 +188,13 @@ def _normalizar_analise(analise: dict) -> dict:
             normalized.append({"label": label, "valor": valor})
 
     analise["indicadores_dashboard"] = normalized
+
+    # Padroniza justificativas de notícias para iniciar com letra maiúscula
+    for noticia in analise.get("noticias_classificadas", []):
+        justif = noticia.get("justificativa", "")
+        if justif and justif[0].islower():
+            noticia["justificativa"] = justif[0].upper() + justif[1:]
+
     return analise
 
 
@@ -390,9 +397,14 @@ def gerar_analise(
     indicadores_json = json.dumps(indicadores, ensure_ascii=False, indent=2) if indicadores else "{}"
 
     if noticias:
-        noticias_resumo = "\n".join(
-            f"- {n['titulo']} ({n['fonte']})" for n in noticias
-        )
+        linhas = []
+        for n in noticias:
+            linha = f"- {n['titulo']} ({n['fonte']})"
+            snippet = n.get("snippet", "")
+            if snippet:
+                linha += f"\n  Contexto: {snippet}"
+            linhas.append(linha)
+        noticias_resumo = "\n".join(linhas)
     else:
         noticias_resumo = "Nenhuma notícia encontrada no período."
 
