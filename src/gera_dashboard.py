@@ -39,17 +39,29 @@ def gerar_dashboard(dados: dict, template_path: str, output_path: str, db_path: 
     dados["datas_disponiveis"] = datas_disponiveis
 
     ativos = dados.get("ativos", {})
+    data_atual = dados.get("data_geracao", "")
+    historico_completo: dict[str, list] = {}
+
     for ticker, ativo in ativos.items():
         historico: list[dict] = []
+        hist_completo: list[dict] = []
+
         if db_path and os.path.exists(db_path):
             try:
                 historico = database.buscar_historico_ticker(db_path, ticker)
-                # Remove a execução atual (mesma data) do histórico para evitar duplicata
-                data_atual = dados.get("data_geracao", "")
                 historico = [h for h in historico if h["data"] != data_atual]
             except Exception as e:
                 logger.warning("[%s] Não foi possível buscar histórico: %s", ticker, e)
+            try:
+                hist_completo = database.buscar_historico_completo_ticker(db_path, ticker)
+                hist_completo = [h for h in hist_completo if h["data"] != data_atual]
+            except Exception as e:
+                logger.warning("[%s] Não foi possível buscar histórico completo: %s", ticker, e)
+
         ativo["historico"] = historico
+        historico_completo[ticker] = hist_completo
+
+    dados["historico_completo"] = historico_completo
 
     with open(template_path, "r", encoding="utf-8") as f:
         template = f.read()

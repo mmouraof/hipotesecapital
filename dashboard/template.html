@@ -27,9 +27,12 @@
       </div>
       <button class="md:hidden text-gray-400 hover:text-gray-600 text-lg leading-none" onclick="closeSidebar()">✕</button>
     </div>
-    <div class="px-2 pt-3 pb-1">
+    <div class="px-2 pt-3 pb-1 space-y-0.5">
       <button id="btn-overview" onclick="renderOverview()" class="w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors text-gray-500 hover:bg-gray-100">
         ← Visão Geral
+      </button>
+      <button id="btn-historico" onclick="renderHistorico()" class="w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors text-gray-500 hover:bg-gray-100">
+        Explorar Histórico
       </button>
     </div>
     <nav class="flex-1 overflow-y-auto pb-3 px-2" id="sidebar-nav"></nav>
@@ -93,16 +96,37 @@
     return `<span>${val}</span>`;
   }
 
+  function noticiaItem(n) {
+    const sentimento = n.sentimento || "neutro";
+    const badge = `<span class="inline-block text-xs px-2 py-0.5 rounded-full font-medium border ${badgeClass(sentimento)}">${sentimento}</span>`;
+    const justif = n.justificativa ? `<p class="text-xs text-gray-500 mt-1">${n.justificativa}</p>` : "";
+    const titulo = n.link
+      ? `<a href="${n.link}" target="_blank" class="text-sm text-gray-800 hover:text-indigo-600 font-medium leading-snug">${n.titulo}</a>`
+      : `<span class="text-sm text-gray-800 font-medium leading-snug">${n.titulo}</span>`;
+    const meta = [n.fonte, n.data_publicacao ? String(n.data_publicacao).slice(0, 10) : ""]
+      .filter(Boolean).join(" · ");
+    return `
+      <li class="py-3 border-b border-gray-100 last:border-0">
+        <div class="flex items-start gap-2">
+          <div class="flex-1">
+            ${titulo}
+            ${justif}
+            ${meta ? `<p class="text-xs text-gray-400 mt-1">${meta}</p>` : ""}
+          </div>
+          <div class="shrink-0 pt-0.5">${badge}</div>
+        </div>
+      </li>`;
+  }
+
   // ─── Sidebar ────────────────────────────────────────────────────────────
-  function buildSidebar(tickers, ativoAtivo) {
+  function buildSidebar(tickers, ativoAtivo, view) {
     const nav = $("sidebar-nav");
     nav.innerHTML = "";
-    const overviewBtn = $("btn-overview");
-    if (ativoAtivo) {
-      overviewBtn.className = "w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors text-gray-500 hover:bg-gray-100";
-    } else {
-      overviewBtn.className = "w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors bg-indigo-50 text-indigo-700";
-    }
+    const base = "w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors";
+    const active = base + " bg-indigo-50 text-indigo-700";
+    const inactive = base + " text-gray-500 hover:bg-gray-100";
+    $("btn-overview").className  = (!ativoAtivo && view !== "historico") ? active : inactive;
+    $("btn-historico").className = (view === "historico") ? active : inactive;
     tickers.forEach(ticker => {
       const btn = document.createElement("button");
       btn.textContent = ticker;
@@ -120,7 +144,7 @@
   function renderOverview() {
     const ativos = DATA.ativos || DATA;
     const tickers = Object.keys(ativos);
-    buildSidebar(tickers, null);
+    buildSidebar(tickers, null, "overview");
 
     const rows = tickers.map(ticker => {
       const d = ativos[ticker];
@@ -218,28 +242,6 @@
     const noticiasRel = todasNoticias.filter(n => n.relevante !== false);
     const noticiasOther = todasNoticias.filter(n => n.relevante === false);
 
-    function noticiaItem(n) {
-      const sentimento = n.sentimento || "neutro";
-      const badge = `<span class="inline-block text-xs px-2 py-0.5 rounded-full font-medium border ${badgeClass(sentimento)}">${sentimento}</span>`;
-      const justif = n.justificativa ? `<p class="text-xs text-gray-500 mt-1">${n.justificativa}</p>` : "";
-      const titulo = n.link
-        ? `<a href="${n.link}" target="_blank" class="text-sm text-gray-800 hover:text-indigo-600 font-medium leading-snug">${n.titulo}</a>`
-        : `<span class="text-sm text-gray-800 font-medium leading-snug">${n.titulo}</span>`;
-      const meta = [n.fonte, n.data_publicacao ? String(n.data_publicacao).slice(0, 10) : ""]
-        .filter(Boolean).join(" · ");
-      return `
-        <li class="py-3 border-b border-gray-100 last:border-0">
-          <div class="flex items-start gap-2">
-            <div class="flex-1">
-              ${titulo}
-              ${justif}
-              ${meta ? `<p class="text-xs text-gray-400 mt-1">${meta}</p>` : ""}
-            </div>
-            <div class="shrink-0 pt-0.5">${badge}</div>
-          </div>
-        </li>`;
-    }
-
     const noticiasHtml = noticiasRel.length
       ? noticiasRel.map(noticiaItem).join("")
       : '<li class="py-3 text-sm text-gray-400">Nenhuma notícia diretamente relacionada.</li>';
@@ -259,7 +261,7 @@
         <p class="text-sm text-gray-700">${p}</p>
       </li>`).join("");
 
-    // Histórico
+    // Histórico (tabela resumida)
     const historico = (d.historico || []).slice().sort((a, b) => b.data.localeCompare(a.data));
     let historicoHtml;
     if (!historico.length) {
@@ -362,6 +364,247 @@
       </div>`;
   }
 
+  // ─── Explorador Histórico ─────────────────────────────────────────────────
+  let _histTicker = null;   // null = todos
+  let _histData   = null;   // null = todas as datas
+  let _histSearch = "";     // string de busca livre
+
+  function renderHistorico(tickerFiltro, dataFiltro, searchFiltro) {
+    if (tickerFiltro  !== undefined) _histTicker = tickerFiltro  || null;
+    if (dataFiltro    !== undefined) _histData   = dataFiltro    || null;
+    if (searchFiltro  !== undefined) _histSearch = searchFiltro  || "";
+
+    const ativos    = DATA.ativos || DATA;
+    const tickers   = Object.keys(ativos);
+    const histComp  = DATA.historico_completo || {};
+    const datas     = DATA.datas_disponiveis  || [];
+
+    buildSidebar(tickers, null, "historico");
+
+    // Coleta todas as entradas que batem com os filtros
+    let entries = [];
+    for (const ticker of tickers) {
+      const snaps = histComp[ticker] || [];
+      const nomeEmpresa = (ativos[ticker] || {}).nome_empresa || ticker;
+      for (const snap of snaps) {
+        if (_histTicker && ticker !== _histTicker) continue;
+        if (_histData   && snap.data !== _histData)   continue;
+        entries.push({ ticker, nome_empresa: nomeEmpresa, ...snap });
+      }
+    }
+
+    // Busca livre: ticker, empresa, razão, resumo do negócio
+    if (_histSearch) {
+      const q = _histSearch.toLowerCase();
+      entries = entries.filter(e =>
+        e.ticker.toLowerCase().includes(q) ||
+        e.nome_empresa.toLowerCase().includes(q) ||
+        (e.analise?.classificacao?.razao  || "").toLowerCase().includes(q) ||
+        (e.analise?.resumo_negocio        || "").toLowerCase().includes(q)
+      );
+    }
+
+    // Ordena por data desc, depois ticker
+    entries.sort((a, b) => b.data.localeCompare(a.data) || a.ticker.localeCompare(b.ticker));
+
+    // ── Filtros ──────────────────────────────────────────────────────────
+    const btnBase = "px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors";
+    const btnOn   = btnBase + " bg-indigo-600 text-white border-indigo-600";
+    const btnOff  = btnBase + " bg-white text-gray-600 border-gray-200 hover:border-indigo-300";
+
+    const tickerBtns = ["", ...tickers].map(t => {
+      const isOn = (_histTicker === null && t === "") || (_histTicker === t);
+      return `<button onclick="renderHistorico('${t}',undefined,undefined)" class="${isOn ? btnOn : btnOff}">${t || "Todos"}</button>`;
+    }).join("");
+
+    const dataOpts = [`<option value="">Todas as datas</option>`]
+      .concat(datas.map(d => `<option value="${d}" ${_histData === d ? "selected" : ""}>${d}</option>`))
+      .join("");
+
+    // ── Resultados ───────────────────────────────────────────────────────
+    const sem = entries.length !== 1 ? "s" : "";
+    const resultadosHtml = entries.length
+      ? entries.map(histCard).join("")
+      : '<p class="text-sm text-gray-400 py-6 text-center">Nenhum resultado encontrado.</p>';
+
+    $("main-content").innerHTML = `
+      <div class="mb-6">
+        <h1 class="text-xl font-bold text-gray-900">Explorar Histórico</h1>
+        <p class="text-sm text-gray-400 mt-0.5">Consulte análises e indicadores de execuções anteriores.</p>
+      </div>
+
+      <!-- Filtros -->
+      <div class="bg-white rounded-xl border border-gray-200 p-4 mb-5">
+        <div class="flex flex-wrap gap-5 items-start">
+          <div class="flex-1 min-w-0">
+            <p class="text-xs text-gray-400 mb-2 font-medium uppercase tracking-wider">Ticker</p>
+            <div class="flex flex-wrap gap-1.5">${tickerBtns}</div>
+          </div>
+          <div>
+            <p class="text-xs text-gray-400 mb-2 font-medium uppercase tracking-wider">Data</p>
+            <select onchange="renderHistorico(undefined,this.value,undefined)"
+              class="text-sm border border-gray-200 rounded-lg px-3 py-1.5 text-gray-700 bg-white focus:outline-none focus:border-indigo-400">
+              ${dataOpts}
+            </select>
+          </div>
+          <div class="w-full">
+            <p class="text-xs text-gray-400 mb-2 font-medium uppercase tracking-wider">Busca livre</p>
+            <input type="text" id="hist-search" value="${_histSearch}"
+              placeholder="Pesquise por ticker, empresa ou texto da análise…"
+              oninput="renderHistorico(undefined,undefined,this.value)"
+              class="w-full text-sm border border-gray-200 rounded-lg px-3 py-1.5 text-gray-700 focus:outline-none focus:border-indigo-400" />
+          </div>
+        </div>
+      </div>
+
+      <p class="text-xs text-gray-400 mb-3">${entries.length} resultado${sem}</p>
+      <div class="space-y-3">${resultadosHtml}</div>`;
+
+    // Restaura foco no campo de busca quando a renderização foi disparada por ele
+    if (searchFiltro !== undefined) {
+      const inp = $("hist-search");
+      if (inp) { inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length); }
+    }
+  }
+
+  // Renderiza um card de resultado colapsável
+  function histCard(entry) {
+    const clas  = (entry.analise || {}).classificacao || {};
+    const id    = ("h_" + entry.ticker + "_" + entry.data).replace(/[^a-z0-9_]/gi, "_");
+    const badge = clas.label
+      ? `<span class="inline-block text-xs px-2 py-0.5 rounded-full font-semibold border ${semaforoClass(clas.label)}">${clas.label}</span>`
+      : "";
+
+    return `
+      <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <button class="w-full text-left p-4 hover:bg-gray-50 transition-colors focus:outline-none"
+                onclick="toggleHistCard('${id}')">
+          <div class="flex items-start justify-between gap-3">
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="font-semibold text-indigo-700 text-sm">${entry.ticker}</span>
+                <span class="text-gray-400 text-xs">·</span>
+                <span class="text-gray-600 text-sm">${entry.nome_empresa}</span>
+                ${badge}
+              </div>
+              ${clas.razao ? `<p class="text-xs text-gray-500 mt-1 truncate">${clas.razao}</p>` : ""}
+              <div class="flex gap-4 mt-1.5 text-xs text-gray-500">
+                <span>R$ ${entry.cotacao}</span>
+                <span>P/L ${entry.pl}</span>
+                <span>DY ${entry.dy}</span>
+              </div>
+            </div>
+            <div class="text-right shrink-0">
+              <p class="text-xs text-gray-400">${entry.data}</p>
+              <p class="text-xs text-indigo-400 mt-1" id="${id}-lbl">▼ expandir</p>
+            </div>
+          </div>
+        </button>
+        <div id="${id}-detail" class="hidden border-t border-gray-100 p-5">
+          ${histDetail(entry)}
+        </div>
+      </div>`;
+  }
+
+  function toggleHistCard(id) {
+    const det = $(id + "-detail");
+    const lbl = $(id + "-lbl");
+    if (det.classList.toggle("hidden")) {
+      lbl.textContent = "▼ expandir";
+    } else {
+      lbl.textContent = "▲ recolher";
+    }
+  }
+
+  // Conteúdo expandido de um snapshot histórico
+  function histDetail(entry) {
+    const analise  = entry.analise || {};
+    const indDash  = analise.indicadores_dashboard || [];
+    const indicadoresBrutos = entry.indicadores || {};
+
+    // Indicadores completos (dados brutos do scraping)
+    const indBrutoRows = Object.entries(indicadoresBrutos)
+      .filter(([k]) => !["Ticker", "Nome", "ticker"].includes(k))
+      .map(([k, v]) => `
+        <tr class="border-t border-gray-100">
+          <td class="py-1.5 pr-4 text-gray-500 text-xs">${k}</td>
+          <td class="py-1.5 text-xs font-medium">${fmt(v)}</td>
+        </tr>`).join("");
+
+    // Indicadores selecionados pela IA (dashboard)
+    const indDashRows = indDash.map(item => `
+      <tr class="border-t border-gray-100">
+        <td class="py-1.5 pr-4 text-gray-500 text-xs">${item.label}</td>
+        <td class="py-1.5 text-xs font-medium">${fmt(item.valor)}</td>
+      </tr>`).join("");
+
+    // Interpretação
+    const interp = analise.interpretacao_indicadores;
+    let interpHtml;
+    if (Array.isArray(interp) && interp.length) {
+      interpHtml = interp.map((sec, i) => `
+        <div class="${i > 0 ? "border-t border-gray-100 pt-3 mt-3" : ""}">
+          <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">${sec.titulo}</h4>
+          <p class="text-xs text-gray-700 leading-relaxed">${sec.texto}</p>
+        </div>`).join("");
+    } else {
+      interpHtml = `<p class="text-xs text-gray-700 leading-relaxed">${interp || "—"}</p>`;
+    }
+
+    // Notícias
+    const noticias = (analise.noticias_classificadas || []).filter(n => n.relevante !== false);
+    const notHtml  = noticias.length
+      ? noticias.map(noticiaItem).join("")
+      : '<li class="py-2 text-xs text-gray-400">Nenhuma notícia relevante.</li>';
+
+    // Perguntas
+    const pergs = (analise.perguntas_investigativas || []).map((p, i) => `
+      <li class="flex gap-2 py-1.5">
+        <span class="shrink-0 w-4 h-4 rounded-full bg-indigo-100 text-indigo-700 text-xs font-bold flex items-center justify-center">${i + 1}</span>
+        <p class="text-xs text-gray-700">${p}</p>
+      </li>`).join("");
+
+    return `
+      <div class="space-y-5">
+
+        <!-- Resumo -->
+        <div>
+          <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Resumo do Negócio</h3>
+          <p class="text-xs text-gray-700 leading-relaxed">${analise.resumo_negocio || "—"}</p>
+        </div>
+
+        <!-- Indicadores IA -->
+        ${indDashRows ? `
+        <div class="border-t border-gray-100 pt-4">
+          <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Indicadores Selecionados pela IA</h3>
+          <table class="w-full mb-4"><tbody>${indDashRows}</tbody></table>
+          ${interpHtml}
+        </div>` : ""}
+
+        <!-- Indicadores brutos -->
+        ${indBrutoRows ? `
+        <details class="border-t border-gray-100 pt-4">
+          <summary class="cursor-pointer text-xs text-gray-400 hover:text-gray-600 select-none mb-2">
+            Todos os indicadores coletados (${Object.keys(indicadoresBrutos).length})
+          </summary>
+          <table class="w-full mt-2"><tbody>${indBrutoRows}</tbody></table>
+        </details>` : ""}
+
+        <!-- Notícias -->
+        <div class="border-t border-gray-100 pt-4">
+          <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Notícias</h3>
+          <ul>${notHtml}</ul>
+        </div>
+
+        <!-- Perguntas -->
+        <div class="border-t border-gray-100 pt-4">
+          <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Perguntas Investigativas</h3>
+          <ul class="space-y-1">${pergs || '<li class="text-xs text-gray-400">—</li>'}</ul>
+        </div>
+
+      </div>`;
+  }
+
   // ─── Init ────────────────────────────────────────────────────────────────
   (function init() {
     const ativos = DATA.ativos || DATA;
@@ -380,7 +623,7 @@
       ? "Gerado em " + DATA.data_geracao
       : "";
 
-    buildSidebar(tickers, null);
+    buildSidebar(tickers, null, "overview");
     renderOverview();
   })();
 </script>

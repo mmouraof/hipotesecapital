@@ -247,7 +247,13 @@ def buscar_historico_ticker(db_path: str, ticker: str, limite: int = 30) -> list
         ).fetchall()
 
     resultado = []
+    datas_vistas: set[str] = set()
     for row in rows:
+        data = row["data_execucao"]
+        if data in datas_vistas:
+            continue
+        datas_vistas.add(data)
+
         indicadores = {}
         if row["indicadores"]:
             try:
@@ -259,11 +265,76 @@ def buscar_historico_ticker(db_path: str, ticker: str, limite: int = 30) -> list
         dy = _extrair_indicador(indicadores, ["Div. Yield", "Div.Yield", "DY", "Dividend Yield"])
 
         resultado.append({
-            "data": row["data_execucao"],
+            "data": data,
             "cotacao": row["cotacao"] or "—",
             "classificacao": row["classificacao"] or "neutro",
             "pl": pl,
             "dy": dy,
+        })
+    return resultado
+
+
+def buscar_historico_completo_ticker(db_path: str, ticker: str, limite: int = 30) -> list[dict]:
+    """Retorna os últimos N snapshots completos de um ticker com indicadores e análise.
+
+    Diferente de buscar_historico_ticker, retorna os dicts completos de indicadores
+    e analise desserializados, para uso no explorador histórico do dashboard.
+
+    Args:
+        db_path: Caminho para o banco SQLite.
+        ticker: Código do ativo (ex: "PRIO3").
+        limite: Número máximo de registros a retornar.
+
+    Returns:
+        Lista de dicts com: data, cotacao, classificacao, pl, dy, indicadores, analise.
+    """
+    with sqlite3.connect(db_path) as conn:
+        conn.row_factory = sqlite3.Row
+        rows = conn.execute(
+            """
+            SELECT s.cotacao, s.classificacao, s.indicadores, s.analise,
+                   e.data_execucao
+            FROM ativos_snapshot s
+            JOIN execucoes e ON e.id = s.execucao_id
+            WHERE s.ticker = ?
+            ORDER BY e.data_execucao DESC, e.id DESC
+            LIMIT ?
+            """,
+            (ticker, limite),
+        ).fetchall()
+
+    resultado = []
+    datas_vistas: set[str] = set()
+    for row in rows:
+        data = row["data_execucao"]
+        if data in datas_vistas:
+            continue
+        datas_vistas.add(data)
+
+        indicadores: dict = {}
+        analise: dict = {}
+        if row["indicadores"]:
+            try:
+                indicadores = json.loads(row["indicadores"])
+            except (json.JSONDecodeError, TypeError):
+                pass
+        if row["analise"]:
+            try:
+                analise = json.loads(row["analise"])
+            except (json.JSONDecodeError, TypeError):
+                pass
+
+        pl = _extrair_indicador(indicadores, ["P/L"])
+        dy = _extrair_indicador(indicadores, ["Div. Yield", "Div.Yield", "DY", "Dividend Yield"])
+
+        resultado.append({
+            "data": data,
+            "cotacao": row["cotacao"] or "—",
+            "classificacao": row["classificacao"] or "neutro",
+            "pl": pl,
+            "dy": dy,
+            "indicadores": indicadores,
+            "analise": analise,
         })
     return resultado
 
