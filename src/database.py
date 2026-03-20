@@ -217,6 +217,79 @@ def buscar_snapshots(db_path: str, execucao_id: int) -> list[dict]:
     return resultado
 
 
+def listar_tickers_por_data(db_path: str, data: str) -> list[tuple[str, str]]:
+    """Lista todos os tickers disponíveis em uma data com seus nomes.
+
+    Args:
+        db_path: Caminho para o banco SQLite.
+        data: Data no formato YYYY-MM-DD.
+
+    Returns:
+        Lista de tuplas (ticker, nome_empresa) ordenada por ticker.
+    """
+    with sqlite3.connect(db_path) as conn:
+        conn.row_factory = sqlite3.Row
+        rows = conn.execute(
+            """
+            WITH latest AS (
+                SELECT s.ticker, s.nome_empresa, MAX(s.id) AS max_id
+                FROM ativos_snapshot s
+                JOIN execucoes e ON e.id = s.execucao_id
+                WHERE e.data_execucao = ?
+                GROUP BY s.ticker
+            )
+            SELECT ticker, nome_empresa FROM latest ORDER BY ticker
+            """,
+            (data,),
+        ).fetchall()
+    return [(row["ticker"], row["nome_empresa"]) for row in rows]
+
+
+def buscar_snapshots_por_data(db_path: str, data: str) -> list[dict]:
+    """Retorna o snapshot mais recente de cada ticker em todas as execuções de uma data.
+
+    Se o mesmo ticker aparece em múltiplas execuções do dia, retorna apenas
+    o snapshot da execução mais recente. Tickers que só existem em execuções
+    anteriores do dia também são incluídos.
+
+    Args:
+        db_path: Caminho para o banco SQLite.
+        data: Data no formato YYYY-MM-DD.
+
+    Returns:
+        Lista de dicts com indicadores, noticias e analise já desserializados.
+    """
+    with sqlite3.connect(db_path) as conn:
+        conn.row_factory = sqlite3.Row
+        rows = conn.execute(
+            """
+            WITH latest AS (
+                SELECT s.ticker, MAX(s.id) AS max_id
+                FROM ativos_snapshot s
+                JOIN execucoes e ON e.id = s.execucao_id
+                WHERE e.data_execucao = ?
+                GROUP BY s.ticker
+            )
+            SELECT s.* FROM ativos_snapshot s
+            JOIN latest l ON s.id = l.max_id
+            ORDER BY s.ticker
+            """,
+            (data,),
+        ).fetchall()
+
+    resultado = []
+    for row in rows:
+        item = dict(row)
+        for campo in ("indicadores", "noticias", "analise"):
+            if item.get(campo):
+                try:
+                    item[campo] = json.loads(item[campo])
+                except (json.JSONDecodeError, TypeError):
+                    item[campo] = {} if campo != "noticias" else []
+        resultado.append(item)
+    return resultado
+
+
 def buscar_historico_ticker(db_path: str, ticker: str, limite: int = 30) -> list[dict]:
     """Retorna os últimos N snapshots de um ticker, ordenados por data decrescente.
 

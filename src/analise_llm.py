@@ -29,8 +29,8 @@ Empresa: {nome_empresa}
 ## Instrução
 Responda EXCLUSIVAMENTE com um JSON puro (sem markdown, sem texto adicional) com a seguinte estrutura:
 {{
-  "resumo_negocio": "Seja detalhado quando os dados permitirem (3+ frases). Descreva o modelo de negócio, posição competitiva, principais vantagens e riscos do negócio",
-  "interpretacao_indicadores": "Seja detalhado quando os dados permitirem (3+ frases). Interprete os indicadores sob a ótica de value investing, comparando com benchmarks do setor e explicando o que cada múltiplo revela sobre a qualidade do negócio",
+  "resumo_negocio": "2 a 3 frases descrevendo o modelo de negócio, posição competitiva e principais vantagens/riscos",
+  "interpretacao_indicadores": "Seja detalhado quando os dados permitirem (3+ frases). Interprete os indicadores sob a ótica de value investing cobrindo TRÊS eixos: (1) Valuation — múltiplos como P/L, P/VP, EV/EBITDA; (2) Rentabilidade — ROE, ROIC, margens; (3) Endividamento — Dív.Bruta/Patrim., Dív.Líq./EBITDA, Liq. Corr. e quaisquer dados de dívida disponíveis nos indicadores brutos. Se o dado existir nos indicadores fornecidos, CITE-O com o valor exato",
   "indicadores_dashboard": [
     {{"label": "nome exato do indicador", "valor": "valor exato como aparece nos dados brutos"}},
     {{"label": "...", "valor": "..."}},
@@ -87,7 +87,7 @@ Responda EXCLUSIVAMENTE com um JSON puro (sem markdown, sem texto adicional) com
     "label": "atrativo ou neutro ou cautela — escolha com base nos indicadores e análises disponíveis",
     "razao": "uma frase objetiva explicando o principal fator da classificação"
   }},
-  "resumo_negocio": "síntese detalhada combinando os pontos mais relevantes das análises A e B — sem adicionar dados novos",
+  "resumo_negocio": "2 a 3 frases combinando os pontos mais relevantes das análises A e B — sem adicionar dados novos",
   "interpretacao_indicadores": [
     {{"titulo": "Valuation", "texto": "Seja detalhado quando os dados permitirem (3+ frases). Analise os múltiplos de valuation (P/L, P/VP, EV/EBITDA etc.), compare com a média do setor e indique se o ativo parece descontado ou caro — extraído ou combinado das análises A e B, sem dados novos"}},
     {{"titulo": "Rentabilidade", "texto": "Seja detalhado quando os dados permitirem (3+ frases). Analise a rentabilidade e margens (ROE, ROIC, Mrg. Líq., Mrg. Ebit etc.), comente tendência e qualidade dos retornos — extraído ou combinado das análises A e B, sem dados novos"}},
@@ -190,11 +190,17 @@ def _normalizar_analise(analise: dict) -> dict:
 
     analise["indicadores_dashboard"] = normalized
 
-    # Padroniza justificativas de notícias para iniciar com letra maiúscula
+    # Padroniza justificativas e razões para iniciar com letra maiúscula
     for noticia in analise.get("noticias_classificadas", []):
         justif = noticia.get("justificativa", "")
         if justif and justif[0].islower():
             noticia["justificativa"] = justif[0].upper() + justif[1:]
+
+    clas = analise.get("classificacao")
+    if isinstance(clas, dict):
+        razao = clas.get("razao", "")
+        if razao and razao[0].islower():
+            clas["razao"] = razao[0].upper() + razao[1:]
 
     return analise
 

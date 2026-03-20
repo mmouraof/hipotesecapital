@@ -50,12 +50,14 @@ O script coleta os dados, gera as análises via API, salva um snapshot no banco 
 ### Regenerar dashboard sem coletar dados novos
 
 ```bash
-# Dashboard da última execução armazenada no banco
+# Dashboard da última data de execução armazenada no banco
 python src/main.py --apenas-dashboard
 
 # Dashboard de uma data específica
 python src/main.py --data 2026-03-14
 ```
+
+Ambos os modos agregam **todos os ativos de todas as execuções do dia**, mantendo o snapshot mais recente de cada ticker. Assim, se dois ativos foram processados pela manhã e outros três à tarde, o dashboard mostra os cinco.
 
 Antes de iniciar a coleta, o script exibe uma etapa interativa no terminal para revisar os ativos. Digite a letra do comando desejado e pressione Enter:
 
