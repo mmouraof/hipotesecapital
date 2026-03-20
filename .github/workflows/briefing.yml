@@ -1,0 +1,70 @@
+name: Briefing Semanal - Hipótese Capital
+
+on:
+  # Roda toda segunda-feira às 8h (horário de Brasília = 11h UTC)
+  schedule:
+    - cron: "0 11 * * 1"
+  # Permite rodar manualmente pelo GitHub
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  gerar-briefing:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout do repositório
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Instalar dependências
+        run: pip install -r requirements.txt
+
+      - name: Criar .env com secrets
+        run: |
+          echo "ANTHROPIC_API_KEY=${{ secrets.ANTHROPIC_API_KEY }}" >> .env
+          echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> .env
+          echo "GOOGLE_API_KEY=${{ secrets.GOOGLE_API_KEY }}" >> .env
+
+      - name: Rodar o briefing (modo não-interativo)
+        run: |
+          # Alimenta "G" no stdin para pular o menu interativo
+          echo "G" | python src/main.py
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+
+      - name: Commit e push do dashboard atualizado
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add dashboard/output/index.html data/output/
+          git diff --staged --quiet || git commit -m "Atualiza briefing semanal - $(date +%Y-%m-%d)"
+          git push
+
+  # Deploy do dashboard no GitHub Pages
+  deploy-pages:
+    needs: gerar-briefing
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout do repositório
+        uses: actions/checkout@v4
+        with:
+          ref: main  # pega o commit mais recente (após o push)
+
+      - name: Publicar no GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dashboard/output
