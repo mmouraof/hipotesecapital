@@ -1,11 +1,16 @@
-ASAI3|Assaí Atacadista
+TUPY3|Tupy
+MYPK3|Iochpe-Maxion
+DXCO3|Dexco
+VALE3|Vale
+AGRO3|BrasilAgro
 RECV3|PetroReconcavo
-MOVI3|Movida
-BRKM5|Braskem
-HBSA3|Hidrovias do Brasil
-ITUB4|Itaú Unibanco
-BBDC4|Bradesco
-OPCT3|Oceanpact
-BRSR6|Banrisul
-PRIO3|PRIO
 SLCE3|SLC Agrícola
+MATD3|Mater Dei
+OPCT3|Oceanpact
+COMR3|Comerc Participações
+BRSR6|Banrisul
+USIM5|Usiminas
+EUCA4|Eucatex
+ABCB4|ABC Brasil
+UGPA3|Ultrapar
+KLBN11|Klabin
