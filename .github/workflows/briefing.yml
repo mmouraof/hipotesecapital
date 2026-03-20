@@ -56,15 +56,24 @@ jobs:
   deploy-pages:
     needs: gerar-briefing
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
       - name: Checkout do repositório
         uses: actions/checkout@v4
         with:
-          ref: main  # pega o commit mais recente (após o push)
+          ref: main
 
-      - name: Publicar no GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
+      - name: Configurar Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload do dashboard como artefato
+        uses: actions/upload-pages-artifact@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dashboard/output
+          path: ./dashboard/output
+
+      - name: Deploy no GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
