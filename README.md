@@ -5,12 +5,14 @@
 | # | Candidato | Nota | Prompt/LLM | Fontes | Interface | Banco/Pipeline | Erros | Doc/Git | Diferencial |
 |---|-----------|------|------------|--------|-----------|---------------|-------|---------|-------------|
 | 1 | **Isaias Goncalves** | **5/5** | 4.5 | 4.5 | 5 | 5 | 5 | 5 | Dashboard interativo + deploy ao vivo, testes, Docker, migracoes |
-| 2 | **Felipe Schowantz** | **4/5** | 3.5 | 5 | 4 | 3.5 | 3.5 | 4.5 | Airflow+dbt+Docker, CVM DFs, PRs com gitflow, RAG chat |
-| 3 | **Walleria Simoes** | **3.5/5** | 4.5 | 4 | 4 | 3.5 | 4 | 3 | Bancos vs empresas, prompt value investing, logging |
-| 4 | **Diego Gadelha** | **3.5/5** | 4 | 3.5 | 3.5 | 3.5 | 4 | 3 | Prompt Buffett/Munger, logging, retry backoff, Groq gratuito |
-| 5 | **Lucas Sodre** | **3.5/5** | 3 | 4 | 3.5 | 4.5 | 3.5 | 3.5 | Modos de pipeline, coleta paralela, pipeline_runs |
-| 6 | **Alex Oliveira** | **3.5/5** | 3.5 | 4 | 3 | 4 | 2.5 | 3.5 | Dois LLMs, MySQL+ORM, dois scrappers |
+| 2 | **Walleria Simoes** | **3.5/5** | 4.5 | 4 | 4 | 3.5 | 4 | 3 | Bancos vs empresas, prompt value investing, logging |
+| 3 | **Diego Gadelha** | **3.5/5** | 4 | 3.5 | 3.5 | 3.5 | 4 | 3 | Prompt Buffett/Munger, logging, retry backoff, Groq gratuito |
+| 4 | **Lucas Sodre** | **3.5/5** | 3 | 4 | 3.5 | 4.5 | 3.5 | 3.5 | Modos de pipeline, coleta paralela, pipeline_runs |
+| 5 | **Alex Oliveira** | **3.5/5** | 3.5 | 4 | 3 | 4 | 2.5 | 3.5 | Dois LLMs, MySQL+ORM, dois scrappers |
+| 6 | **Felipe Schowantz** | **3.5/5** ¹ | 3.5 | 5 | 3 | 3.5 | 3.5 | 3.5 | Airflow+dbt+Docker, CVM DFs, PRs com gitflow, RAG chat |
 | 7 | **Joao Felipe** | **3/5** | 5 | 4.5 | 4 | 1 | 3.5 | 2 | Melhor prompt de value investing, 5 fontes de dados |
+
+*¹ Felipe revisado de 4/5 para 3.5/5 apos execucao: dashboard inacessivel sem Docker, URL ausente no git clone, .env ≠ .envexample, PostgreSQL nao acessivel.*
 
 ---
 
@@ -73,10 +75,11 @@
 - README + DEPLOY_GUIDE + GEMINI.md
 - pytest.ini configurado, Licenca MIT
 
-**Destaque: Felipe Schowantz (4.5/5)**
+**Destaque: Felipe Schowantz (3.5/5 revisado)**
 - 44 commits com 11 PRs e gitflow
-- README exemplar com tabelas, known issues, Mermaid diagram
+- README bem estruturado com tabelas, known issues, Mermaid diagram
 - Apresentacao PPTX inclusa
+- *Penalizado: URL ausente no git clone, .env ≠ .envexample, Docker nao declarado como prerequisito*
 
 ---
 
@@ -84,13 +87,17 @@
 
 | Candidato | Alerta | Severidade |
 |-----------|--------|------------|
-| Diego Gadelha | `salvar_snapshot_no_db()` com corpo `pass` - dados NAO persistidos | CRITICO |
+| Diego Gadelha | `salvar_snapshot_no_db()` com corpo `pass` - exigiu correcao manual para funcionar | CRITICO |
+| Felipe Schowantz | Dashboard inacessivel na pratica: Docker obrigatorio nao documentado como prerequisito | CRITICO |
 | Felipe Schowantz | TRUNCATE destroi historico no PostgreSQL | ALTO |
 | Felipe Schowantz | DAG `llm_synthesis` referencia funcoes inexistentes | ALTO |
 | Felipe Schowantz | Credenciais (keys.env) vazadas no historico git | ALTO |
+| Felipe Schowantz | URL do repositorio ausente nas instrucoes de git clone | ALTO |
+| Felipe Schowantz | `.env` inconsistente com `.env.example` - setup impossivel sem inspecao manual | MEDIO |
 | Felipe Schowantz | Co-autoria explicita com Claude Sonnet em 2 commits | MEDIO |
 | Joao Felipe | Apenas 6 commits, sem banco de dados | ALTO |
 | Walleria Simoes | `.env` e `__pycache__` commitados (sem .gitignore!) | MEDIO |
+| Lucas Sodre | Instrucoes de setup exclusivas para Linux sem aviso | MEDIO |
 | Lucas Sodre | `venv/`, `__pycache__` no repo; bare `except:` em yahoo_raw | MEDIO |
 | Alex Oliveira | Bug: chaves do dict no insert_data nao batem com output dos scrappers | ALTO |
 | Alex Oliveira | 133 dependencias incluindo Django, Selenium, LangChain nao usados | BAIXO |
@@ -99,14 +106,14 @@
 
 ---
 
-## Branches de Avaliacao
+## Arquivos de Avaliacao
 
-Cada candidato tem avaliacao detalhada na respectiva branch:
+Avaliacoes individuais detalhadas na pasta `avaliacoes/` desta branch:
 
-- `avaliacao/alex-oliveira` - Nota 3.5/5
-- `avaliacao/diego-gadelha` - Nota 3.5/5
-- `avaliacao/felipe-schowantz` - Nota 4/5
-- `avaliacao/isaias-goncalves` - Nota 5/5
-- `avaliacao/joao-felipe` - Nota 3/5
-- `avaliacao/lucas-sodre` - Nota 3.5/5
-- `avaliacao/walleria-simoes` - Nota 3.5/5
+- [avaliacoes/isaias-goncalves.md](avaliacoes/isaias-goncalves.md) - Nota 5/5
+- [avaliacoes/walleria-simoes.md](avaliacoes/walleria-simoes.md) - Nota 3.5/5
+- [avaliacoes/diego-gadelha.md](avaliacoes/diego-gadelha.md) - Nota 3.5/5
+- [avaliacoes/lucas-sodre.md](avaliacoes/lucas-sodre.md) - Nota 3.5/5
+- [avaliacoes/alex-oliveira.md](avaliacoes/alex-oliveira.md) - Nota 3.5/5
+- [avaliacoes/felipe-schowantz.md](avaliacoes/felipe-schowantz.md) - Nota 3.5/5 *(revisado de 4/5)*
+- [avaliacoes/joao-felipe.md](avaliacoes/joao-felipe.md) - Nota 3/5
