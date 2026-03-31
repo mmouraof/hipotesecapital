@@ -1,0 +1,12 @@
+venvproj/
+venv/
+.env
+database.db
+__pycache__/
+.pytest_cache/
+tests/
+.git/
+.gitignore
+README.md
+GEMINI.md
+pytest.ini

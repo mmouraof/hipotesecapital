@@ -1,0 +1,14 @@
+yfinance
+streamlit
+pandas
+python-dotenv
+openai
+google-generativeai
+pytest
+pytest-mock
+requests
+beautifulsoup4
+lxml
+python-dateutil
+curl_cffi
+typing-extensions

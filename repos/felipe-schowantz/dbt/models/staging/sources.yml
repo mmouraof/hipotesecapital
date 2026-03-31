@@ -1,0 +1,10 @@
+version: 2
+
+sources:
+  - name: staging
+    database: hipotetical_fia
+    schema: staging
+    tables:
+      - name: raw_bcb
+      - name: raw_yfinance
+      - name: raw_cvm

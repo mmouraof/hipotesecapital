@@ -1,0 +1,16 @@
+# Dependências do data-pipeline (extractors + loaders + DAGs)
+# Versões gerenciadas pelo constraint file do Airflow 2.9.2
+yfinance
+python-bcb
+requests
+pandas
+pyarrow
+psycopg2-binary
+google-api-python-client
+google-auth
+google-auth-httplib2
+anthropic
+openai
+python-dotenv
+dbt-core
+dbt-postgres

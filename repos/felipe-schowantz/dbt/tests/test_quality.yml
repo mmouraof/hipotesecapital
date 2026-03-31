@@ -1,0 +1,52 @@
+version: 2
+
+models:
+  - name: stg_yfinance
+    columns:
+      - name: ticker
+        tests:
+          - not_null
+          - accepted_values:
+              values: ["ASAI3", "PRIO3", "RENT3"]
+      - name: preco_atual
+        tests:
+          - not_null
+
+  - name: stg_bcb
+    columns:
+      - name: data_referencia
+        tests:
+          - not_null
+      - name: selic_meta_pct
+        tests:
+          - not_null
+
+  - name: stg_cvm
+    columns:
+      - name: cnpj
+        tests:
+          - not_null
+      - name: valor
+        tests:
+          - not_null
+
+  - name: mart_asai3
+    columns:
+      - name: ticker
+        tests:
+          - not_null
+      - name: pl
+        tests:
+          - not_null
+
+  - name: mart_prio3
+    columns:
+      - name: ticker
+        tests:
+          - not_null
+
+  - name: mart_rent3
+    columns:
+      - name: ticker
+        tests:
+          - not_null

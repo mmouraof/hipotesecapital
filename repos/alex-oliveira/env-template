@@ -1,0 +1,16 @@
+# Tickers
+TICKERS_LIST = ["ticker1", "ticker2", ...]
+
+# Configurações para o Scrapper
+MAX_TRIES = 0
+SLEEP = 0  # SLEEP = 1 significa 1 segundo
+
+# LLM APIs
+GEMINI_API_KEY = "sua_chave_api"
+CLAUDE_API_KEY = "sua_chave_api"
+
+# Configuração para o banco de dados
+USERNAME = "seu_usuario"
+PASSWORD = "sua_senha"
+OWNER = "admin"
+OWNER_PASSWORD = "senha_forte_123"

@@ -1,0 +1,16 @@
+services:
+  finance-terminal:
+    build: .
+    container_name: hipotese-terminal
+    ports:
+      - "8501:8501"
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+    env_file:
+      - .env
+    environment:
+      - DB_PATH=/app/data/database.db
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped

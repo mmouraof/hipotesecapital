@@ -1,0 +1,6 @@
+venv/
+__pycache__/
+*.pyc
+observações
+.env
+hipotese_capital.db

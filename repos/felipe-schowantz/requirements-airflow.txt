@@ -1,0 +1,13 @@
+# Apenas dependências usadas dentro das DAGs do Airflow
+yfinance>=0.2.38
+python-bcb>=0.2.0
+requests>=2.31.0
+pandas>=2.1.0
+pyarrow>=14.0.0
+psycopg2-binary>=2.9.9
+google-api-python-client>=2.100.0
+google-auth>=2.23.0
+google-auth-httplib2>=0.1.1
+anthropic>=0.20.0
+openai>=1.10.0
+python-dotenv>=1.0.0

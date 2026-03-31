@@ -1,0 +1,32 @@
+Documentos/Case DS&AI CR.pdf
+Documentos/Gmail - Programa de Estágio Charles River 2026_ Case Study.htm
+docs/Documentação.txt
+
+# pixi environments
+.pixi/*
+!.pixi/config.toml
+
+# Ambientes virtuais
+.venv/
+venv/
+
+# Cache Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Credenciais — NUNCA commitar
+*.env
+keys.env
+.env
+
+# Dados gerados
+data-lakehouse/
+testes/
+uploads/
+
+# dbt generated
+dbt/target/
+dbt/logs/
+dbt/.user.yml
+dbt/dbt_packages/

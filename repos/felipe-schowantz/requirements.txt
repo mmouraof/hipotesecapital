@@ -1,0 +1,28 @@
+# Pipeline
+yfinance>=0.2.38
+python-bcb>=0.2.0
+requests>=2.31.0
+pandas>=2.1.0
+pyarrow>=14.0.0      # Parquet
+sqlalchemy>=2.0.0
+psycopg2-binary>=2.9.9
+
+# dbt
+dbt-core>=1.7.0
+dbt-postgres>=1.7.0
+
+# Google Drive
+google-api-python-client>=2.100.0
+google-auth>=2.23.0
+google-auth-httplib2>=0.1.1
+
+# Dashboard
+streamlit>=1.30.0
+plotly>=5.18.0
+
+# LLM
+anthropic>=0.20.0
+openai>=1.10.0
+
+# Utils
+python-dotenv>=1.0.0

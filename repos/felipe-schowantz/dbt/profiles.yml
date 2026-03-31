@@ -1,0 +1,12 @@
+hipotetical_fia:
+  target: dev
+  outputs:
+    dev:
+      type: postgres
+      host: postgres          # nome do container no Docker
+      port: 5432
+      user: airflow
+      password: airflow
+      dbname: hipotetical_fia
+      schema: staging
+      threads: 4

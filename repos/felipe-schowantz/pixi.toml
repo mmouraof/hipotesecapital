@@ -1,0 +1,10 @@
+[workspace]
+authors = ["FelipeSchowantz <schowantz.torres@email.com>"]
+channels = ["conda-forge"]
+name = "centralizador_de_analise"
+platforms = ["win-64"]
+version = "0.1.0"
+
+[tasks]
+
+[dependencies]

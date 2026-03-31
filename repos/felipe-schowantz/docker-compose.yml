@@ -1,0 +1,136 @@
+# ── Variáveis compartilhadas ─────────────────────────────────────────────────
+x-airflow-env: &airflow-env
+  AIRFLOW__CORE__EXECUTOR: LocalExecutor
+  AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+  AIRFLOW__CORE__FERNET_KEY: ""
+  AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "true"
+  AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+  AIRFLOW__API__AUTH_BACKENDS: airflow.api.auth.backend.basic_auth,airflow.api.auth.backend.session
+  AIRFLOW__WEBSERVER__EXPOSE_CONFIG: "true"
+  PYTHONPATH: /opt/airflow/data-pipeline
+
+  LLM_API_KEY: ${LLM_API_KEY:-}
+  LLM_PROVIDER: ${LLM_PROVIDER:-anthropic}
+  POSTGRES_URL: postgresql://airflow:airflow@postgres:5432/hipotetical_fia
+  GOOGLE_SERVICE_ACCOUNT_JSON: ${GOOGLE_SERVICE_ACCOUNT_JSON:-}
+  GOOGLE_DRIVE_FOLDER_ID: ${GOOGLE_DRIVE_FOLDER_ID:-}
+
+x-airflow-volumes: &airflow-volumes
+  - ./data-pipeline/dags:/opt/airflow/dags
+  - ./data-pipeline/extractors:/opt/airflow/data-pipeline/extractors
+  - ./data-pipeline/loaders:/opt/airflow/data-pipeline/loaders
+  - ./data-pipeline/utils:/opt/airflow/data-pipeline/utils
+  - ./synthesis:/opt/airflow/data-pipeline/synthesis
+  - ./dbt:/opt/airflow/dbt
+  - ./data-lakehouse:/opt/airflow/data-lakehouse
+  - ./uploads:/opt/airflow/uploads
+  - airflow-logs:/opt/airflow/logs
+
+# ── Serviços ──────────────────────────────────────────────────────────────────
+services:
+
+  # ── PostgreSQL ───────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:14.22
+    container_name: cr_postgres
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./infra/init_db.sql:/docker-entrypoint-initdb.d/init_db.sql
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "airflow"]
+      interval: 10s
+      retries: 5
+    restart: unless-stopped
+
+  # ── Airflow Init (roda uma vez) ───────────────────────────────────────────
+  airflow-init:
+    build: .
+    container_name: cr_airflow_init
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      <<: *airflow-env
+      _AIRFLOW_DB_MIGRATE: "true"
+      _AIRFLOW_WWW_USER_CREATE: "true"
+      _AIRFLOW_WWW_USER_USERNAME: admin
+      _AIRFLOW_WWW_USER_PASSWORD: admin
+      _AIRFLOW_WWW_USER_FIRSTNAME: Admin
+      _AIRFLOW_WWW_USER_LASTNAME: User
+      _AIRFLOW_WWW_USER_EMAIL: admin@example.com
+      _AIRFLOW_WWW_USER_ROLE: Admin
+    volumes: *airflow-volumes
+    command: version
+    restart: on-failure
+
+  # ── Airflow Webserver ─────────────────────────────────────────────────────
+  airflow-webserver:
+    build: .
+    container_name: cr_airflow_webserver
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
+    environment:
+      <<: *airflow-env
+    volumes: *airflow-volumes
+    ports:
+      - "8080:8080"
+    command: webserver
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8080/health"]
+      interval: 30s
+      retries: 5
+    restart: unless-stopped
+
+  # ── Airflow Scheduler ─────────────────────────────────────────────────────
+  airflow-scheduler:
+    build: .
+    container_name: cr_airflow_scheduler
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
+    environment:
+      <<: *airflow-env
+    volumes: *airflow-volumes
+    command: scheduler
+    restart: unless-stopped
+
+  # ── Dashboard (Streamlit) ─────────────────────────────────────────────────
+  dashboard:
+    build:
+      context: .
+      dockerfile: dashboard/Dockerfile
+    container_name: cr_dashboard
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PG_HOST: postgres
+      PG_PORT: "5432"
+      PG_DB: hipotetical_fia
+      PG_USER: airflow
+      PG_PASSWORD: airflow
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      LLM_PROVIDER: ${LLM_PROVIDER:-anthropic}
+    ports:
+      - "8501:8501"
+    restart: unless-stopped
+
+  # ── Adminer ───────────────────────────────────────────────────────────────
+  adminer:
+    image: adminer:4.8.1
+    container_name: cr_adminer
+    ports:
+      - "8081:8080"
+    restart: unless-stopped
+
+# ── Volumes ───────────────────────────────────────────────────────────────────
+volumes:
+  postgres-data:
+  airflow-logs:
