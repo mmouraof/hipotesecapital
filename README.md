@@ -6,8 +6,8 @@
 |---|-----------|------|------------|--------|-----------|---------------|-------|---------|-------------|
 | 1 | **Isaias Goncalves** | **5/5** | 4.5 | 4.5 | 5 | 5 | 5 | 5 | Dashboard interativo + deploy ao vivo, testes, Docker, migracoes |
 | 2 | **Walleria Simoes** | **3.5/5** | 4.5 | 4 | 4 | 3.5 | 4 | 3 | Bancos vs empresas, prompt value investing, logging |
-| 3 | **Diego Gadelha** | **3.5/5** | 4 | 3.5 | 3.5 | 3.5 | 4 | 3 | Prompt Buffett/Munger, logging, retry backoff, Groq gratuito |
-| 4 | **Lucas Sodre** | **3.5/5** | 3 | 4 | 3.5 | 4.5 | 3.5 | 3.5 | Modos de pipeline, coleta paralela, pipeline_runs |
+| 3 | **Lucas Sodre** | **3.5/5** | 3 | 4 | 3.5 | 4.5 | 3.5 | 3.5 | Modos de pipeline, coleta paralela, pipeline_runs |
+| 4 | **Diego Gadelha** | **3.5/5** | 4 | 3.5 | 3.5 | 3.5 | 4 | 3 | Prompt Buffett/Munger, logging, retry backoff, Groq gratuito |
 | 5 | **Alex Oliveira** | **3.5/5** | 3.5 | 4 | 3 | 4 | 2.5 | 3.5 | Dois LLMs, MySQL+ORM, dois scrappers |
 | 6 | **Felipe Schowantz** | **3.5/5** ¹ | 3.5 | 5 | 3 | 3.5 | 3.5 | 3.5 | Airflow+dbt+Docker, CVM DFs, PRs com gitflow, RAG chat |
 | 7 | **Joao Felipe** | **3/5** | 5 | 4.5 | 4 | 1 | 3.5 | 2 | Melhor prompt de value investing, 5 fontes de dados |
@@ -112,8 +112,8 @@ Avaliacoes individuais detalhadas na pasta `avaliacoes/` desta branch:
 
 - [avaliacoes/isaias-goncalves.md](avaliacoes/isaias-goncalves.md) - Nota 5/5
 - [avaliacoes/walleria-simoes.md](avaliacoes/walleria-simoes.md) - Nota 3.5/5
-- [avaliacoes/diego-gadelha.md](avaliacoes/diego-gadelha.md) - Nota 3.5/5
 - [avaliacoes/lucas-sodre.md](avaliacoes/lucas-sodre.md) - Nota 3.5/5
+- [avaliacoes/diego-gadelha.md](avaliacoes/diego-gadelha.md) - Nota 3.5/5
 - [avaliacoes/alex-oliveira.md](avaliacoes/alex-oliveira.md) - Nota 3.5/5
 - [avaliacoes/felipe-schowantz.md](avaliacoes/felipe-schowantz.md) - Nota 3.5/5 *(revisado de 4/5)*
 - [avaliacoes/joao-felipe.md](avaliacoes/joao-felipe.md) - Nota 3/5
