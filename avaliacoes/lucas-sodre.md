@@ -138,6 +138,9 @@ Dashboard Streamlit mencionado no README com visualizacao de dados atuais e hist
 - Mensagens em portugues, descritivas
 - `venv/` no repo (deveria estar no .gitignore)
 
+**Problemas de setup (verificado rodando):**
+- **Instrucoes exclusivas para Linux sem aviso**: os comandos do README (`python3`, paths de venv, etc.) pressupõem ambiente Linux/Mac sem nenhuma menção — usuario Windows nao consegue seguir as instrucoes diretamente
+
 ---
 
 ## 7. Visao Arquitetural e RAG (Fase 3)
@@ -150,7 +153,7 @@ Nao implementado.
 
 O candidato entregou um pipeline robusto com o **melhor sistema de modos de execucao** entre todos os avaliados. A capacidade de rodar `--no-llm --no-news --workers 4` demonstra pensamento de engenharia para diferentes cenarios (testes rapidos vs coleta completa). O banco de dados com `pipeline_runs` e snapshots imutaveis e bem modelado. A coleta paralela com ThreadPoolExecutor e um diferencial tecnico.
 
-Porem, o prompt LLM e generico, sem calibracao para value investing. O uso de `print()` e a chamada HTTP raw ao Gemini (sem SDK) reduzem a robustez. O `venv/` e o `pipeline.sqlite3` nao deveriam estar no repositorio.
+Porem, o prompt LLM e generico, sem calibracao para value investing. O uso de `print()` e a chamada HTTP raw ao Gemini (sem SDK) reduzem a robustez. O `venv/` e o `pipeline.sqlite3` nao deveriam estar no repositorio. As instrucoes de setup assumem Linux sem aviso — reduz acessibilidade do README.
 
 **Diferenciais:** Pipeline com multiplos modos (--no-llm, --no-news, --workers), coleta paralela ThreadPoolExecutor, pipeline_runs para auditoria, Fundamentus API
-**Lacunas:** Prompt generico, print() em vez de logging, venv/ e .sqlite3 no repo, sem testes, chamada HTTP raw ao Gemini
+**Lacunas:** Prompt generico, print() em vez de logging, venv/ e .sqlite3 no repo, sem testes, chamada HTTP raw ao Gemini, instrucoes de setup exclusivas para Linux sem aviso

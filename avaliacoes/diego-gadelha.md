@@ -91,7 +91,7 @@ Dashboard Streamlit com:
 - A tabela `snapshots` mistura dados de mercado E resultados do LLM na mesma linha - deveria separar
 - Nao ha tabela de `pipeline_runs` para rastrear execucoes
 - `resumo_llm`, `analise_llm` e `perguntas_json` na tabela de snapshots e uma violacao de normalizacao
-- O `salvar_snapshot_no_db()` no main.py tem o corpo como `pass` (nao implementado!)
+- O `salvar_snapshot_no_db()` no main.py tem o corpo como `pass` (nao implementado!) — **bug confirmado em execucao: exigiu alteracao manual do codigo para persistir dados**
 
 ---
 
@@ -111,7 +111,7 @@ Dashboard Streamlit com:
 - Pipeline reporta sucessos vs total ao final
 
 **Pontos negativos:**
-- `salvar_snapshot_no_db()` esta com `pass` - dados nao sao persistidos!
+- `salvar_snapshot_no_db()` esta com `pass` - dados nao sao persistidos! **(confirmado: exigiu alteracao manual para funcionar)**
 - Falta validacao do JSON retornado pelo LLM
 
 ---
@@ -140,7 +140,9 @@ Nao implementado.
 
 ## Nota Final: 3.5/5
 
-O candidato demonstrou bom dominio do prompt engineering com calibracao para value investing, e e o unico que implementou logging consistente desde o inicio. A interface Streamlit e rica e funcional. Porem, ha um problema critico: a funcao `salvar_snapshot_no_db()` tem corpo `pass`, significando que os dados temporais provavelmente nao estao sendo persistidos no banco. A modelagem do banco mistura dados de mercado com output do LLM na mesma tabela. A diversificacao de fontes e limitada (so yfinance + NewsAPI).
+*(Nota mantida; bug critico confirmado em execucao em 31/mar/2026)*
+
+O candidato demonstrou bom dominio do prompt engineering com calibracao para value investing, e e o unico que implementou logging consistente desde o inicio. A interface Streamlit e rica e funcional. Porem, a execucao do codigo confirmou o bug critico: `salvar_snapshot_no_db()` com corpo `pass` impediu a persistencia dos dados temporais e exigiu alteracao manual para o codigo funcionar. A modelagem do banco mistura dados de mercado com output do LLM na mesma tabela. A diversificacao de fontes e limitada (so yfinance + NewsAPI).
 
 **Diferenciais:** Logging consistente, retry com backoff para LLM, prompt bem calibrado para value investing, uso de Groq (gratuito)
-**Lacunas:** Funcao de persistencia nao implementada (pass), README fraco, pouca diversificacao de fontes, NewsAPI com limitacoes no plano gratuito
+**Lacunas:** Funcao de persistencia nao implementada (pass) — **exigiu correcao manual**, README fraco, pouca diversificacao de fontes, NewsAPI com limitacoes no plano gratuito

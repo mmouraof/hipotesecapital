@@ -69,6 +69,8 @@ O dashboard Streamlit (`dashboard/app.py`) tem 4 tabs:
 **Pontos negativos:**
 - ASAI3 nao esta na lista de tickers do dashboard (so PRIO3 e RENT3)
 - O analista nao gera um "relatorio de briefing" como os outros candidatos - a interface e mais exploratoria
+- **Dashboard inacessivel na pratica (verificado rodando)**: Docker e obrigatorio para subir PostgreSQL + Airflow, mas o README nao explicita isso como pre-requisito essencial — sem Docker rodando, o dashboard nao funciona; sem PostgreSQL acessivel, os dados nao existem
+- **PDF/PPTX inacessiveis via dashboard**: o upload de transcritos funciona na interface mas depende do pipeline ter rodado com sucesso end-to-end
 
 ---
 
@@ -144,10 +146,13 @@ Alem disso, `stg_yfinance` e configurado como `incremental` no dbt, mas o loader
 - Mensagens seguem convencao (feat:, fix:, docs:)
 - `.gitignore`, `.dockerignore`, `.gitattributes` presentes
 
-**PROBLEMAS:**
+**PROBLEMAS (verificado rodando):**
 - **Credential leak**: `keys.env` foi commitado e depois removido - credenciais no historico git!
 - **Co-autoria explicita com Claude Sonnet 4.6** em 2 commits (README e gold layer)
 - `pixi.toml` com dependencias vazias
+- **URL do repositorio ausente no git clone**: o README instrui o usuario a clonar mas nao inclui o link do repo — o candidato omitiu o proprio URL
+- **`.env` inconsistente com `.env.example`**: o arquivo de exemplo nao reflete as variaveis reais usadas no codigo, dificultando o setup sem inspeção manual do codigo
+- **Docker obrigatorio nao documentado como prerequisito**: a stack inteira depende de Docker Compose (PostgreSQL + Airflow + Adminer), mas o README nao declara Docker como requisito antes das instrucoes de uso
 
 ---
 
@@ -178,18 +183,21 @@ O candidato implementou RAG como context stuffing no `synthesis/rag.py`:
 
 ---
 
-## Nota Final: 4/5
+## Nota Final: 3.5/5
 
-O candidato demonstrou a **melhor visao arquitetural** entre todos os avaliados. A escolha de Airflow + PostgreSQL + dbt + Docker e a coleta de dados direto da CVM (DFs) sao diferenciais claros. O README e exemplar e o uso de PRs demonstra maturidade. O dashboard com chat RAG e um diferencial da Fase 3.
+*(Revisado de 4/5 para 3.5/5 apos tentativa de execucao em 31/mar/2026)*
 
-Porem, ha problemas de integracao que sugerem que as pecas nao foram testadas end-to-end:
+O candidato demonstrou a **melhor visao arquitetural** entre todos os avaliados. A escolha de Airflow + PostgreSQL + dbt + Docker e a coleta de dados direto da CVM (DFs) sao diferenciais claros. O README e bem estruturado e o uso de PRs demonstra maturidade. O dashboard com chat RAG e um diferencial da Fase 3.
+
+Porem, a experiencia de rodar o codigo revelou gaps criticos de execucao: o pipeline nao e executavel sem Docker (nao documentado como prerequisito essencial), o PostgreSQL nao ficou acessivel, o dashboard nao carregou, a URL do repo esta ausente nas instrucoes de clone, e o `.env` diverge do `.envexample`. Isso confirma que as pecas nao foram testadas end-to-end:
 - TRUNCATE destroi historico no PostgreSQL
 - DAG de sintese referencia funcoes inexistentes
 - Mismatch de colunas entre staging e gold
 - Credenciais vazadas no git history
 - Co-autoria explicita com IA (2 commits)
+- Dashboard inacessivel sem infraestrutura Docker completa
 
-O candidato priorizou amplitude arquitetural sobre profundidade de implementacao - entregou muito escopo mas com gaps de integracao.
+O candidato priorizou amplitude arquitetural sobre profundidade de implementacao — entregou muito escopo mas com gaps severos de integracao que impedem execucao sem modificacoes.
 
-**Diferenciais:** Airflow + dbt + Docker, dados CVM (DFs), 11 PRs com gitflow, README exemplar, RAG com chat interativo, dados macro BCB, apresentacao PPTX
-**Lacunas:** TRUNCATE destroi historico, DAG de sintese quebrada, credential leak, co-autoria com IA, mismatch de colunas, prompt generico
+**Diferenciais:** Airflow + dbt + Docker, dados CVM (DFs), 11 PRs com gitflow, RAG com chat interativo, dados macro BCB, apresentacao PPTX
+**Lacunas:** TRUNCATE destroi historico, DAG de sintese quebrada, credential leak, co-autoria com IA, mismatch de colunas, prompt generico, Docker nao documentado como prerequisito, .env ≠ .envexample, URL ausente no git clone, dashboard inacessivel na pratica
