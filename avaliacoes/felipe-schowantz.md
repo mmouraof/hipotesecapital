@@ -183,21 +183,49 @@ O candidato implementou RAG como context stuffing no `synthesis/rag.py`:
 
 ---
 
-## Nota Final: 3.5/5
+## 8. Resultado da Execucao (01/abr/2026)
 
-*(Revisado de 4/5 para 3.5/5 apos tentativa de execucao em 31/mar/2026)*
+**Ambiente:** Docker Desktop 29.3.1, Windows 11
 
-O candidato demonstrou a **melhor visao arquitetural** entre todos os avaliados. A escolha de Airflow + PostgreSQL + dbt + Docker e a coleta de dados direto da CVM (DFs) sao diferenciais claros. O README e bem estruturado e o uso de PRs demonstra maturidade. O dashboard com chat RAG e um diferencial da Fase 3.
+**Docker Compose:** FUNCIONAL
+- `docker compose up --build -d` constroi e inicia 5 containers com sucesso
+- Containers: cr_postgres (healthy), cr_adminer (8081), cr_airflow_webserver (8080, healthy), cr_airflow_scheduler, cr_dashboard (8501)
+- Conflitos de nome de container na primeira tentativa (containers de execucao anterior) — resolvido com `docker rm -f`
+- Airflow health check: metadatabase healthy, scheduler healthy
 
-Porem, a experiencia de rodar o codigo revelou gaps criticos de execucao: o pipeline nao e executavel sem Docker (nao documentado como prerequisito essencial), o PostgreSQL nao ficou acessivel, o dashboard nao carregou, a URL do repo esta ausente nas instrucoes de clone, e o `.env` diverge do `.envexample`. Isso confirma que as pecas nao foram testadas end-to-end:
-- TRUNCATE destroi historico no PostgreSQL
-- DAG de sintese referencia funcoes inexistentes
-- Mismatch de colunas entre staging e gold
-- Credenciais vazadas no git history
-- Co-autoria explicita com IA (2 commits)
-- Dashboard inacessivel sem infraestrutura Docker completa
+**DAGs disponiveis:**
+- `monday_briefing` (segunda 8h): pipeline de extracao + transformacao
+- `llm_synthesis` (segunda 9h): sintese LLM
 
-O candidato priorizou amplitude arquitetural sobre profundidade de implementacao — entregou muito escopo mas com gaps severos de integracao que impedem execucao sem modificacoes.
+**Extracao (monday_briefing):** PARCIALMENTE FUNCIONAL
+- `extract_bcb`: SUCCESS (3.8s) — 366 linhas de series macro do BCB
+- `extract_cvm`: SUCCESS (11.8s) — 3576 linhas de DFs da CVM
+- `extract_yfinance`: SUCCESS (6.2s) — 3 linhas de dados de mercado
+- `load_to_postgres`: SUCCESS (1.1s) — dados carregados em staging (raw_bcb, raw_cvm, raw_yfinance, stg_yfinance)
 
-**Diferenciais:** Airflow + dbt + Docker, dados CVM (DFs), 11 PRs com gitflow, RAG com chat interativo, dados macro BCB, apresentacao PPTX
-**Lacunas:** TRUNCATE destroi historico, DAG de sintese quebrada, credential leak, co-autoria com IA, mismatch de colunas, prompt generico, Docker nao documentado como prerequisito, .env ≠ .envexample, URL ausente no git clone, dashboard inacessivel na pratica
+**Transformacao dbt:** FALHOU (13/17 modelos com erro)
+- `dbt_run` falhou apos 3 tentativas com `RuntimeError: [DBT] dbt run falhou`
+- Modelos que PASSARAM (4): stg_yfinance, gold_market, e 2 staging models
+- Modelos que FALHARAM (13): todos os gold models por empresa (asai3, prio3, rent3 — balance, cf, dre), gold_macro, e todos os mart views
+- Tipo de erro: "Database Error" — confirma mismatch de colunas entre staging e gold layers
+- gold_macro espera `ref_date` mas stg_bcb produz `data`
+- PostgreSQL apos execucao: staging tables populadas, gold.gold_market criada (3 rows), demais gold/mart ausentes
+
+**Dashboard (porta 8501):** Streamlit servindo HTML (container ativo)
+
+**LLM synthesis DAG:** Nao testada (depende de gold layer funcional)
+
+---
+
+## Nota Final: 3/5
+
+*(Revisado de 3.5/5 para 3/5 apos execucao completa via Docker em 01/abr/2026)*
+
+O candidato demonstrou a **melhor visao arquitetural** entre todos os avaliados. A escolha de Airflow + PostgreSQL + dbt + Docker e a coleta de dados direto da CVM (DFs) sao diferenciais claros. O README e bem estruturado e o uso de PRs demonstra maturidade.
+
+A execucao via Docker confirmou que a **infraestrutura funciona** (todos containers iniciam, Airflow saudavel) e a **extracao de dados e robusta** (BCB, CVM e yfinance extraem com sucesso). Porem, a **camada de transformacao dbt esta quebrada**: 13 de 17 modelos falham com erros de banco, confirmando o mismatch de colunas entre staging e gold. Isso significa que os dados brutos chegam ao PostgreSQL mas nao sao transformados em formatos uteis para o dashboard ou LLM.
+
+O pipeline e ambicioso e bem estruturado em teoria, mas a integracao end-to-end nao foi validada pelo candidato. A extracao funciona, a transformacao falha, e consequentemente a sintese LLM e inacessivel.
+
+**Diferenciais:** Airflow + dbt + Docker funcional, dados CVM (DFs), extracao robusta (BCB 366 rows, CVM 3576 rows), 11 PRs com gitflow, RAG com chat interativo, dados macro BCB, apresentacao PPTX
+**Lacunas:** dbt transformation layer quebrada (13/17 modelos falham), TRUNCATE destroi historico, DAG de sintese quebrada, credential leak, co-autoria com IA, mismatch de colunas staging→gold, prompt generico, .env ≠ .envexample
