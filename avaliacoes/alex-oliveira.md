@@ -1,122 +1,121 @@
-Avaliacao - Joao Felipe
-Repositorio: https://github.com/joaoleal02/DashboardCR
-Commits: 6 (23/mar a 26/mar)
+Avaliacao - Alex Oliveira
+Repositorio: https://github.com/alexoliveiraFGV24/charles-river-case-dsia
+Commits: 14 (23/mar a 30/mar)
 ---
 1. Qualidade do Prompt / LLM Engineering (Fase 1)
-Nota do criterio: 5/5
-O melhor prompt entre todos os candidatos. O SYSTEM_PROMPT em `prompts.py` reflete claramente a otica de value investing:
-> "Think like a value-oriented analyst. Prioritize business quality, downside protection, capital structure, profitability quality, and what could go wrong."
+Nota do criterio: 3.5/5
+O candidato utilizou duas LLMs (Gemini para resumo/noticias e Claude para traducao/relatorio), o que demonstra conhecimento de diferentes modelos. O prompt do relatorio final gera um HTML formatado com analise fundamentalista, incluindo indicadores, noticias e perguntas do analista.
 Pontos positivos:
-Instrucoes explicitas sobre value investing: business quality, downside protection, capital structure
-"Distinguish factual inputs from analytical inference" - separacao entre fato e opiniao
-"Never fabricate facts that are not present in the input" - anti-alucinacao
-"Avoid generic finance filler and motivational language" - foco em utilidade
-"If a field is unavailable, acknowledge the gap and reason around it" - tratamento de lacunas
-Output em JSON estruturado com schema definido
-Funcoes auxiliares de formatacao (`format_metric_value`, `safe_text`) para sanitizar input
-Classificacao de noticias com sentimento e rationale
+Uso de dois modelos diferentes (Gemini + Claude) para tarefas distintas
+Classificacao de noticias com escala de impacto (-1.0 a 1.0)
+Relatorio em HTML formatado para PDF
 Pontos negativos:
-Prompt em ingles (menor relevancia para analistas brasileiros, mas tecnicamente correto)
+O prompt nao reflete claramente a otica de value investing (qualidade do negocio, protecao de downside)
+O conteudo do prompt de `generate_ai_report()` foi resumido pelo WebFetch, mas pela descricao parece mais generico do que calibrado para a gestora
+Falta instrucao explicita para o LLM nao fabricar dados
 ---
 2. Coleta Automatizada e Fontes de Dados (Fase 1)
-Nota do criterio: 4.5/5
-A maior diversificacao de APIs publicas entre os candidatos, com collectors separados por responsabilidade.
+Nota do criterio: 4/5
+Boa diversificacao de fontes com fallback entre dois scrappers.
 Fontes utilizadas:
-B3 company registry API (dados cadastrais)
-Yahoo Finance (fundamentals: P/L, ROE, margens, DY, EBITDA)
-CVM (setor, descricao, metricas contabeis)
-Status Invest API (precos e dividendos)
-Google News RSS (noticias recentes)
-Indicadores cobertos: P/L, ROE, Divida Liq./EBITDA, Margem Liquida, DY - todos os 5.
-Arquitetura de coleta:
-`CompanyDataCollector` - perfil corporativo via API publica
-`MarketDataCollector` - indicadores via yfinance
-`NewsDataCollector` - noticias com fallback
-`public_api.py` - wrapper para APIs publicas (B3, CVM)
-Fallback entre fontes com merge de dados
-Pontos positivos:
-Collectors desacoplados por responsabilidade
-Merge de perfil com fallbacks (`_merge_company_profile`)
-"Missing data displays as 'Unavailable' rather than causing failures"
+yfinance (scrapper1.py) - dados cadastrais, cotacao, indicadores
+BeautifulSoup/scrapper2.py - backup alternativo
+Status Invest, Investidor 10, B3, TradingView, Fundamentus (mencionados no README)
+Google News RSS para noticias
+Indicadores cobertos: P/L, ROE, Divida Liq./EBITDA (calculado manualmente), Margem Liquida, Dividend Yield - todos os solicitados.
+Pontos negativos:
+O calculo de Divida Liquida/EBITDA e manual (`totalDebt - totalCash / ebitda`) - simplificado demais
+Tratamento de ticker invalido e basico (retorna dict vazio)
+`get_full_data()` no scrapper1 retorna `{}` se falhar, mas a logica no database.py chama `s1.get_full_data(ticker)` duas vezes (ineficiente)
 ---
 3. Interface e Usabilidade (Fase 1)
-Nota do criterio: 4/5
-Dashboard Streamlit funcional com:
-Seletor de ticker (universo limitado a 10 ativos)
-Geracao de briefing sob demanda
-Grafico de retornos com janelas (12M, 6M, YTD, MTD)
-Metricas em grid
-Noticias com analise de sentimento
-Session state para persistencia
+Nota do criterio: 3/5
+O `main.py` apenas chama `generate_dashboard_report()`, indicando uso de Streamlit. O screenshot no `/public/dashboard.png` sugere um dashboard funcional.
 Pontos negativos:
-Universo de tickers hardcoded (10 ativos)
-Sem historico de analises
-Sem banco de dados (conforme observado: "sem mencao ao banco de dados")
+O main.py nao tem ponto de entrada claro via Streamlit (o README diz `streamlit run main.py` mas o main.py so importa uma funcao)
+Falta evidencia de que o usuario pode digitar um ticker e receber o relatorio
+A interface parece depender de `generate_dashboard_report()` que nao foi completamente analisada
 ---
 4. Modelagem do Banco de Dados e Pipeline (Fase 2)
-Nota do criterio: 1/5
-Nao ha banco de dados implementado. O pipeline e stateless - cada execucao busca dados frescos e nao persiste nada. Nao ha historico, nao ha snapshots, nao ha tabelas.
-O candidato entregou apenas a Fase 1. A Fase 2 esta ausente.
+Nota do criterio: 4/5
+Boa separacao entre dados permanentes e temporais usando MySQL/MariaDB com SQLAlchemy ORM.
+Estrutura:
+`Ativos` (permanente) - ticker como PK, empresa, setor, segmento, resumo
+`DadosCotacao` (temporal) - DataConsulta como parte da chave
+`IndicadoresFundamentalistas` (temporal) - DataConsulta como parte da chave
+`Noticias` (temporal) - DataConsulta como parte da chave
+Pontos positivos:
+Separacao correta entre dados estaticos (Ativos) e temporais (cotacao, indicadores, noticias)
+Upsert para Ativos (so insere se nao existir)
+Foreign keys no Ticker
+Scripts SQL separados (CREATE_TABLES.sql, DROP_TABLES.sql)
+Uso de ORM (SQLAlchemy)
+Pontos negativos:
+Rodadas subsequentes PODEM sobrescrever dados? Nao ha constraint unico em (DataConsulta, Ticker) visivel no schema
+Falta tabela de relatorios LLM para historico
 ---
 5. Tratamento de Erros e Robustez (Fase 2)
-Nota do criterio: 3.5/5
+Nota do criterio: 2.5/5
 Cobertura dos 3 casos obrigatorios:
-API fora do ar: Try/except em cada collector com retorno de valores padrao
-Ticker invalido: Validacao via `ticker_universe.py` (lista fechada)
-Resposta LLM fora do formato: `LLMGenerationError` com `raw_response`, tratado no `BriefingService`
-Pontos positivos:
-Exception para LLM (`LLMGenerationError`)
-Debug info completo no `BriefingResult` (sources, news_count, llm_configured, etc.)
-"Application remains functional even if LLM processing encounters errors"
-`schemas.py` para validacao do output LLM
-Pontos negativos:
-Sem logging (usa print implicito do Streamlit)
-Sem retry/backoff
+API fora do ar: Fallback entre scrapper1 e scrapper2, mas tratamento generico com `except Exception as e: print(f"Erro em {ticker}: {e}")`
+Ticker invalido: Retorna dict vazio, sem mensagem clara ao usuario
+Resposta LLM fora do formato: Nao ha validacao visivel do output do LLM
+Problemas:
+Usa `print()` em vez de logging em todo o codigo
+Try/except generico sem especificar tipos de excecao
+Sem retry com backoff para APIs
 ---
 6. Documentacao e Versionamento (Fases 1 e 2)
-Nota do criterio: 2/5
+Nota do criterio: 3.5/5
 README:
-Descricao clara do escopo da Fase 1
-Lista de tickers suportados e fontes de dados
-Setup instructions basico
-Design notes sobre graceful degradation
+Descreve objetivos, stack, setup e execucao
+Faltam detalhes do codigo (conforme observado)
+Template de .env fornecido
+Imagem do dashboard incluida
 Versionamento:
-Apenas 6 commits - o menor numero entre todos os candidatos
-Historico muito condensado, dificil rastrear evolucao
-Parece ter sido desenvolvido localmente e pushado em poucos blocos
-Mensagens descritivas mas poucas
+14 commits progressivos ao longo de 7 dias
+Mensagens descritivas em portugues
+Evolucao visivel (estrutura -> scrapper -> banco -> dashboard)
 ---
 7. Visao Arquitetural e RAG (Fase 3)
 Nao implementado.
 ---
 8. Resultado da Execucao (01/abr/2026)
-Ambiente: Python 3.13, Windows 11, OpenAI API key
-Instalacao: `pip install -r requirements.txt` — sucesso sem erros
-Coleta de dados: EXCELENTE
-B3 Listed Companies API: retorna dados cadastrais (nome, setor, segmento, descricao)
-CVM Open Data: dados contabeis
-Status Invest API: precos e dividendos
-yfinance: fundamentals (P/L 5.73, ROE 28.18%, Net Debt/EBITDA 1.60, Net Margin 22.13%, DY 803%)
-Google News RSS: 5 noticias recentes com links
-Debug info rastreia source de cada metrica: `metric_sources` com status `direct`/`fallback`
-LLM com modelo correto (gpt-4o-mini): FUNCIONAL
-Gera JSON estruturado com 4 campos: business_summary, fundamentals_interpretation, news_analysis (com per-item sentiment + rationale), analyst_questions
-Qualidade da analise alta: interpreta P/L, ROE, alavancagem, DY, margem liquida
-Sentimento de noticias individual com justificativa
-LLM com modelo do .env (gpt-5.4-mini): FALHA
-`.env` e `.env.example` ambos definem `OPENAI_MODEL=gpt-5.4-mini`
-Este modelo NAO EXISTE na API da OpenAI → resposta vazia
-Erro: `The LLM response was not valid JSON`
-`llm_report: None`, `llm_error` preenchido
-Graceful degradation funciona: dados de mercado e noticias ainda exibidos, apenas LLM ausente
-Banco de dados: AUSENTE (confirmado)
-Pipeline e completamente stateless
-Sem persistencia de historico
+Ambiente: Python 3.13, Windows 11, sem Docker, sem MySQL
+Instalacao:
+`pip install -r requirements.txt` instala 133+ pacotes incluindo Django, Selenium, LangChain, weasyprint — nenhum deles e utilizado no codigo principal
+Tempo de instalacao excessivo para dependencias nao utilizadas
+Execucao: IMPOSSIVEL sem intervencao significativa
+Problema #1 — Chaves de API placeholder:
+`.env` contem `GEMINI_API_KEY=placeholder_gemini_key` e `CLAUDE_API_KEY=placeholder_claude_key`
+Nao sao chaves reais — exige que o avaliador substitua manualmente
+`env-template` documenta o formato mas nao ha instrucao clara sobre onde obter as chaves
+Problema #2 — MySQL obrigatorio:
+`database.py` usa SQLAlchemy com MySQL como backend
+Sem MySQL instalado, a aplicacao nao inicia
+Nao ha fallback para SQLite ou outro banco local
+Setup requer: instalar MySQL, criar database, criar usuario, conceder permissoes
+Problema #3 — WeasyPrint e dependencias nativas:
+`llm_utils.py` importa `from weasyprint import HTML` no topo do modulo
+WeasyPrint requer bibliotecas GTK nativas (libgobject, pango) que nao estao disponiveis em Windows sem MSYS2
+Erro: `OSError: cannot load library 'libgobject-2.0-0'`
+Como `scrapper1.py` → `scrapper2.py` → `llm_utils.py` formam uma cadeia de imports, NENHUM modulo pode ser importado
+Problema #4 — Cadeia de imports circular:
+`scrapper1.py` importa de `scrapper2.py` que importa de `llm_utils.py`
+Falha em weasyprint impede importacao de QUALQUER scrapper
+Impossivel testar coleta de dados isoladamente
+Teste parcial (sem imports do projeto):
+yfinance funciona independentemente: retorna dados de PETR4 (nome, setor, preco, P/E, ROE)
+Confirma que a logica de coleta via yfinance seria funcional se os imports fossem isolados
 ---
-Nota Final: 3/5
-(Confirmado em execucao em 01/abr/2026)
-O candidato demonstrou excelente qualidade de prompt engineering - o melhor entre todos os avaliados, com clara compreensao da otica de value investing. A arquitetura de codigo e limpa com boa separacao de responsabilidades (collectors, services, schemas). A coleta de dados e diversificada e funcional com 5 APIs publicas.
-Execucao confirmou: coleta de dados funciona perfeitamente com 5 fontes. LLM funciona com modelo correto (gpt-4o-mini) e produz analises de alta qualidade. Porem, o `.env` e `.env.example` ambos definem `gpt-5.4-mini` (modelo inexistente), tornando o LLM inoperante out of the box. A graceful degradation funciona corretamente.
-A ausencia completa de banco de dados (Fase 2) permanece o gap mais significativo. O historico de apenas 6 commits sugere desenvolvimento condensado.
-Diferenciais: Melhor prompt de value investing, arquitetura limpa de collectors, 5 fontes de dados diferentes, LLMGenerationError, debug_info com metric_sources
-Lacunas: Sem banco de dados (Fase 2 ausente), modelo LLM inexistente no .env (gpt-5.4-mini), apenas 6 commits, sem logging, universo de tickers hardcoded
+Nota Final: 2.5/5
+(Revisado de 3.5/5 para 2.5/5 apos tentativa de execucao em 01/abr/2026)
+O candidato demonstrou pensamento arquitetural com dois scrappers, dois LLMs e banco MySQL com ORM. Porem, o projeto e impossivel de executar sem intervencao significativa:
+Chaves de API sao placeholders (nao funcionais)
+MySQL obrigatorio sem alternativa
+WeasyPrint requer bibliotecas nativas GTK (falha em Windows)
+Cadeia de imports impede importacao de qualquer modulo
+133 dependencias incluindo pacotes nao utilizados (Django, Selenium, LangChain)
+A combinacao destes problemas significa que nenhum avaliador consegue rodar o codigo em menos de 10 minutos (requisito do case). O README nao alerta sobre prerequisitos pesados (MySQL, GTK libs). O tratamento de erros permanece o ponto mais fraco, com uso extensivo de `print()` e `except Exception` generico.
+Diferenciais: Uso de duas LLMs (Gemini + Claude), MySQL com SQLAlchemy ORM, dois scrappers em fallback
+Lacunas: Projeto inoperante sem MySQL + GTK libs + chaves reais, 133 dependencias excessivas, cadeia de imports fragil, falta logging, tratamento de erros superficial, prompt generico, sem testes
