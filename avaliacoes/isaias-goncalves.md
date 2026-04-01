@@ -23,7 +23,7 @@ O `InvestmentAnalyzer` usa OpenAI GPT-4o-mini com prompt calibrado para value in
 - Separacao clara entre coleta e analise
 
 **Pontos negativos:**
-- Nao foi possivel ver o texto exato do prompt (WebFetch resumiu)
+- Sem instrucao anti-alucinacao explicita (ex: nao fabrique dados)
 - Poderia incluir instrucoes sobre downside protection e qualidade do negocio mais explicitamente
 
 ---
