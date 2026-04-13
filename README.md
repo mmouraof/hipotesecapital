@@ -1,132 +1,216 @@
-# Resumo Comparativo - Avaliacoes Case DS&AI
+# Hipótese Capital — Briefing Automatizado
 
-## Ranking Final
+Ferramenta interna que gera relatórios automatizados de ativos para a reunião de comitê da segunda-feira. Dado um ticker, entrega: resumo do negócio, indicadores fundamentalistas interpretados, notícias recentes classificadas por impacto e três perguntas investigativas.
 
-| # | Candidato | Nota | Prompt/LLM | Fontes | Interface | Banco/Pipeline | Erros | Doc/Git | Diferencial |
-|---|-----------|------|------------|--------|-----------|---------------|-------|---------|-------------|
-| 1 | **Isaias Goncalves** | **5/5** | 4.5 | 4.5 | 5 | 5 | 5 | 5 | Dashboard interativo + deploy ao vivo, testes, Docker, migracoes |
-| 2 | **Walleria Simoes** | **3.5/5** | 4.5 | 4 | 4 | 3.5 | 4 | 3 | Bancos vs empresas, prompt value investing, logging |
-| 3 | **Lucas Sodre** | **3.5/5** | 3 | 4 | 3.5 | 4.5 | 3.5 | 3.5 | Modos de pipeline, coleta paralela, pipeline_runs |
-| 4 | **Janys Guenn** | **3.5/5** | 3.5 | 4 | 3.5 | 3.5 | 3.5 | 2.5 | RAG com ChromaDB + reranking LLM (Fase 3), pipeline end-to-end funcional |
-| 5 | **Joao Felipe** | **3/5** | 5 | 4.5 | 4 | 1 | 3.5 | 2 | Melhor prompt de value investing, 5 fontes de dados |
-| 6 | **Felipe Schowantz** | **3/5** ¹ | 3.5 | 5 | 4 | 3.5 | 3.5 | 4.5 | Airflow+dbt+Docker, CVM DFs, PRs com gitflow, RAG chat |
-| 7 | **Diego Gadelha** | **2.5/5** ² | 4 | 3.5 | 3.5 | 3.5 | 4 | 3 | Prompt Buffett/Munger, logging, retry backoff, Groq gratuito |
-| 8 | **Alex Oliveira** | **2.5/5** ³ | 3.5 | 4 | 3 | 4 | 2.5 | 3.5 | Dois LLMs, MySQL+ORM, dois scrappers |
+Desenvolvido como case técnico para a posição de Data Science & AI na Hipótese Capital.
 
-*¹ Felipe revisado de 3.5/5 para 3/5: extracao funciona (BCB 366 rows, CVM 3576 rows, yfinance OK), mas dbt falha em 13/17 modelos — camada de transformacao quebrada.*
-*² Diego revisado de 3.5/5 para 2.5/5: dois bugs criticos — import order impede carregamento da GROQ_API_KEY, salvar_snapshot_no_db() com corpo `pass` impede persistencia.*
-*³ Alex revisado de 3.5/5 para 2.5/5: projeto inoperante — requer MySQL + GTK libs (WeasyPrint) + chaves reais (placeholder no .env), cadeia de imports impede qualquer execucao.*
+## Início Rápido
 
----
+### Pré-requisitos
 
-## Analise Detalhada por Criterio
+- Python 3.11+
+- Uma API key da [Anthropic](https://console.anthropic.com/)
+- Uma API key da [OpenAI](https://platform.openai.com/)
+- Uma API key da [GoogleAI](https://aistudio.google.com/)
 
-### 1. Prompt / LLM Engineering
-**Destaque: Joao Felipe (5/5)**
-- Unico prompt com "value-oriented analyst", "downside protection", "business quality"
-- Anti-alucinacao, anti-filler, tratamento de lacunas
-- JSON schema enforcement com fallback
+### Instalação local
 
-**Outros destaques:**
-- Walleria (4.5): Prompt com value investing explicito ("valor intrinseco", "abordagem bottom-up", "protecao de downside"), anti-alucinacao forte
-- Isaias (4.5): Persona de fundo de R$1.2B AUM com posicoes concentradas, moats, margem de seguranca
-- Diego (4): Hierarquia correta Buffett/Munger (qualidade antes de valuation), "NUNCA repita numeros"
+```bash
+git clone https://github.com/mmouraof/hipotesecapital.git
+cd hipotesecapital
+pip install -r requirements.txt
+```
 
-### 2. Coleta de Dados
-**Destaque: Felipe Schowantz (5/5)**
-- Unico a coletar dados direto das DFs da CVM (DRE, BPA, BPP, DFC)
-- 5 series macro do BCB com codigos especificos
-- Upload de transcritos de calls em PDF
+### Configuração da API Key
 
-**Outros destaques:**
-- Joao Felipe (4.5): 5 fontes (B3 API, yfinance, CVM, Status Invest, Google News) com pattern primary/fallback
-- Isaias (4.5): Anti-blocking com curl_cffi + Chrome impersonation, dual-source news com dedup
+Crie um arquivo `.env` na raiz do projeto a partir do exemplo:
 
-### 3. Interface e Usabilidade
-**Destaque: Isaias Goncalves (5/5)**
-- Unico com deploy ao vivo (hipotesecapital.duckdns.org) com Docker + Nginx + SSL
-- Graficos de retorno, historico, branding, tooltips em metricas
-- DEPLOY_GUIDE.md completo
+```bash
+cp .env.example .env
+```
 
-### 4. Banco de Dados e Pipeline
-**Destaque: Isaias Goncalves (5/5)**
-- Migracoes versionadas (001_initial_schema.sql)
-- MD5 dedup para noticias
-- Politica de refresh de 7 dias para companies
-- `get_full_run_by_timestamp()` para reconstruir analises historicas
+Abra o `.env` e substitua os valores placeholder pelas suas chaves:
 
-**Destaque: Lucas Sodre (4.5)**
-- pipeline_runs para auditoria com status tracking
-- ThreadPoolExecutor para coleta paralela
-- Modos configuravies (--no-llm, --no-news, --workers)
+```
+ANTHROPIC_API_KEY=sk-ant-sua-chave-aqui
+OPENAI_API_KEY=sk-sua-chave-aqui  
+GOOGLE_API_KEY=sua-chave-aqui     
+```
 
-**Problemas criticos:**
-- Joao Felipe (1/5): sem banco de dados
-- Felipe (3.5): TRUNCATE destroi historico no PostgreSQL
-- Diego (3.5): `salvar_snapshot_no_db()` tem corpo `pass`
+> **Segurança:** O arquivo `.env` está no `.gitignore` e nunca será commitado. Nunca compartilhe sua chave diretamente no código ou em commits.
 
-### 5. Tratamento de Erros
-**Destaque: Isaias Goncalves (5/5)**
-- Unico com testes unitarios (10 tests com mocking)
-- Exception customizada LLMGenerationError com raw_response
-- Logging customizado (console + arquivo)
-- Debug info completo no resultado
+### Execução completa (coleta + análise + dashboard)
 
-### 6. Documentacao e Versionamento
-**Destaque: Isaias Goncalves (5/5)**
-- 68 commits progressivos
-- README + DEPLOY_GUIDE + GEMINI.md
-- pytest.ini configurado, Licenca MIT
+```bash
+python src/main.py
+```
 
-**Destaque: Felipe Schowantz (3.5/5 revisado)**
-- 44 commits com 11 PRs e gitflow
-- README bem estruturado com tabelas, known issues, Mermaid diagram
-- Apresentacao PPTX inclusa
-- *Penalizado: URL ausente no git clone, .env ≠ .envexample, Docker nao declarado como prerequisito*
+O script coleta os dados, gera as análises via API, salva um snapshot no banco SQLite e monta o dashboard em `dashboard/output/index.html`. Abra esse arquivo diretamente no navegador — nenhum servidor local é necessário. Ao final da execução, o arquivo é aberto automaticamente no navegador padrão.
 
----
+### Regenerar dashboard sem coletar dados novos
 
-## Alertas e Observacoes Criticas
+```bash
+# Dashboard da última data de execução armazenada no banco
+python src/main.py --apenas-dashboard
 
-| Candidato | Alerta | Severidade | Verificado em execucao |
-|-----------|--------|------------|----------------------|
-| Diego Gadelha | `salvar_snapshot_no_db()` com corpo `pass` — nada persiste em snapshots/noticias | CRITICO | Sim (01/abr) |
-| Diego Gadelha | Import order bug: `load_dotenv()` apos import do LLM — GROQ_API_KEY nunca carregada | CRITICO | Sim (01/abr) |
-| Diego Gadelha | Pipeline reporta "3/3 analises geradas" quando LLM falhou em todas — mensagem enganosa | ALTO | Sim (01/abr) |
-| Alex Oliveira | Projeto inoperante: MySQL + WeasyPrint (GTK libs) + chaves placeholder | CRITICO | Sim (01/abr) |
-| Alex Oliveira | Cadeia de imports (scrapper1→scrapper2→llm_utils→weasyprint) impede qualquer modulo | CRITICO | Sim (01/abr) |
-| Alex Oliveira | 133 dependencias incluindo Django, Selenium, LangChain nao usados | MEDIO | Sim (01/abr) |
-| Felipe Schowantz | dbt transformation layer quebrada: 13/17 modelos falham com Database Error | CRITICO | Sim (01/abr) |
-| Felipe Schowantz | TRUNCATE destroi historico no PostgreSQL | ALTO | Confirmado em analise |
-| Felipe Schowantz | Mismatch de colunas staging→gold (ex: `data` vs `ref_date` em gold_macro) | ALTO | Sim (01/abr) |
-| Felipe Schowantz | Credenciais (keys.env) vazadas no historico git | ALTO | Confirmado em analise |
-| Felipe Schowantz | Co-autoria explicita com Claude Sonnet em 2 commits | MEDIO | Confirmado em analise |
-| Joao Felipe | `.env` define `OPENAI_MODEL=gpt-5.4-mini` (modelo inexistente) — LLM falha OOTB | ALTO | Sim (01/abr) |
-| Joao Felipe | Apenas 6 commits, sem banco de dados (Fase 2 ausente) | ALTO | Confirmado |
-| Walleria Simoes | `.env` e `__pycache__` commitados (sem .gitignore!) | MEDIO | Confirmado |
-| Walleria Simoes | `main.py` batch nao integra com banco — persiste apenas em Excel | MEDIO | Sim (01/abr) |
-| Walleria Simoes | Duplicatas em `market_data` (sem UNIQUE constraint em ticker+date) | MEDIO | Sim (01/abr) |
-| Lucas Sodre | Instrucoes de setup exclusivas para Linux sem aviso (funciona em Windows) | BAIXO | Sim (01/abr) |
-| Lucas Sodre | `venv/`, `__pycache__` no repo; bare `except:` em yahoo_raw | MEDIO | Confirmado |
-| Janys Guenn | `.env` com API key Groq commitada no repo (apesar de .gitignore listar .env) | ALTO | Sim (13/abr) |
-| Janys Guenn | `hipotese_capital.db`, `__pycache__`, `banco_vetorial_simples/` commitados | MEDIO | Sim (13/abr) |
-| Janys Guenn | Historico perde indicadores: so salva cotacao e P/L, nao ROE/DY/Margem/Divida | MEDIO | Sim (13/abr) |
-| Janys Guenn | Dois `requirements.txt` (`requirements.txt` e `requirements (1).txt`) — confuso | BAIXO | Sim (13/abr) |
-| Isaias Goncalves | Path de migracao relativo ao CWD — falha se executado de dentro de `src/` | BAIXO | Sim (01/abr) |
-| Isaias Goncalves | GEMINI.md revela uso de IA como assistente de codigo | INFO | Confirmado |
-| Isaias Goncalves | `verify=False` no curl_cffi (risco de seguranca) | BAIXO | Confirmado |
+# Dashboard de uma data específica
+python src/main.py --data 2026-03-14
+```
 
----
+Ambos os modos agregam **todos os ativos de todas as execuções do dia**, mantendo o snapshot mais recente de cada ticker. Assim, se dois ativos foram processados pela manhã e outros três à tarde, o dashboard mostra os cinco.
 
-## Arquivos de Avaliacao
+Antes de iniciar a coleta, o script exibe uma etapa interativa no terminal para revisar os ativos. Digite a letra do comando desejado e pressione Enter:
 
-Avaliacoes individuais detalhadas na pasta `avaliacoes/` desta branch:
+- **A** — adicionar um ativo à lista (o terminal pedirá o ticker e o nome da empresa, um por vez)
+- **R** — remover um ativo da lista (o terminal pedirá o ticker ou o nome da empresa)
+- **G** — gerar o relatório com a lista atual (o terminal exibirá a lista final e pedirá confirmação: **S** para gerar, **N** para voltar)
 
-- [avaliacoes/isaias-goncalves.md](avaliacoes/isaias-goncalves.md) - Nota 5/5 *(confirmado em execucao)*
-- [avaliacoes/walleria-simoes.md](avaliacoes/walleria-simoes.md) - Nota 3.5/5 *(confirmado em execucao)*
-- [avaliacoes/lucas-sodre.md](avaliacoes/lucas-sodre.md) - Nota 3.5/5 *(confirmado em execucao)*
-- [avaliacoes/janys-guenn.md](avaliacoes/janys-guenn.md) - Nota 3.5/5 *(pipeline funcional + RAG Fase 3)*
-- [avaliacoes/joao-felipe.md](avaliacoes/joao-felipe.md) - Nota 3/5 *(confirmado em execucao)*
-- [avaliacoes/felipe-schowantz.md](avaliacoes/felipe-schowantz.md) - Nota 3/5 *(revisado de 3.5/5 — dbt quebrado)*
-- [avaliacoes/diego-gadelha.md](avaliacoes/diego-gadelha.md) - Nota 2.5/5 *(revisado de 3.5/5 — 2 bugs criticos)*
-- [avaliacoes/alex-oliveira.md](avaliacoes/alex-oliveira.md) - Nota 2.5/5 *(revisado de 3.5/5 — inoperante)*
+Caso não haja nenhum input por 1 minuto, o relatório é gerado automaticamente com a lista atual. A lista confirmada é salva automaticamente em `data/ativos.txt`.
+
+### Testar o dashboard sem rodar o pipeline
+
+Para visualizar o layout sem consumir a API, abra `dashboard/index_mock.html` diretamente no navegador. Ele contém dados fictícios de 3 ativos (PRIO3, ITUB4, SLCE3) já embutidos e funciona offline.
+
+## Usando GitHub Codespaces
+
+O repositório inclui configuração de Dev Container para execução imediata.
+
+1. No GitHub, clique em **Code** → **Codespaces** → **Create codespace on main**
+2. Aguarde o setup automático (instala dependências via `requirements.txt`)
+3. Configure as API keys de uma das duas formas:
+   - **Via Secret (recomendado):** antes de criar o Codespace, vá em Settings → Secrets and variables → Codespaces → New repository secret → adicione `ANTHROPIC_API_KEY` e `OPENAI_API_KEY`
+   - **Via `.env`:** no terminal do Codespace, execute `cp .env.example .env` e edite com suas chaves
+4. Para visualizar o layout imediatamente (sem consumir a API), baixe `dashboard/index_mock.html` e abra no navegador
+5. Para rodar o pipeline completo: `python src/main.py` — ao finalizar, baixe `dashboard/output/index.html` e abra no navegador
+
+## Arquitetura
+
+```
+hipotese-capital/
+├── .devcontainer/
+│   └── devcontainer.json       # Config do GitHub Codespaces
+├── .vscode/
+│   └── settings.json           # Settings do VS Code
+├── .env.example                # Template da API key
+├── .gitignore
+├── requirements.txt
+├── data/
+│   ├── ativos.txt              # Tickers + nomes das empresas
+│   ├── briefing.db             # Banco SQLite local (gerado automaticamente, no .gitignore)
+│   └── output/                 # JSONs gerados (backup por execução, no .gitignore)
+├── src/
+│   ├── main.py                 # Orquestrador principal
+│   ├── database.py             # Persistência SQLite e consulta a dados históricos
+│   ├── coleta_indicadores.py   # Scraping do Fundamentus + fallbacks
+│   ├── coleta_noticias.py      # Coleta de notícias via RSS (Google News)
+│   ├── analise_llm.py          # Análise e seleção de indicadores via Claude, GPT e Gemini
+│   └── gera_dashboard.py       # Injeta dados no template HTML
+└── dashboard/
+    ├── template.html           # Template com placeholder para dados
+    ├── index_mock.html         # Versão com dados mock para testes (abrir no navegador)
+    └── output/                 # HTML gerado pelo pipeline (criado na primeira execução)
+```
+
+### Fluxo de dados
+
+```
+ativos.txt → coleta_indicadores.py  (scraping Fundamentus → Investidor10 → GPT-4o)
+                                     → indicadores completos em JSON
+           → coleta_noticias.py     (RSS Google News)
+                                     → notícias em JSON
+           → analise_llm.py         (Claude Sonnet  → análise A)
+                                     (GPT-4o         → análise B)
+                                     (Gemini 2.5 Flash → síntese de A+B)
+                                     → análise final + indicadores_dashboard selecionados
+           → database.py            → snapshot salvo em data/briefing.db (SQLite)
+           → data/output/YYYY-MM-DD.json   (backup legível por execução)
+           → gera_dashboard.py      → consulta histórico do banco por ticker
+           → dashboard/output/index.html   (histórico embutido no JSON)
+```
+
+### Coleta de indicadores
+
+A coleta segue uma estratégia em três estágios:
+
+1. **Scraping do Fundamentus (primário):** extrai diretamente a página `fundamentus.com.br/detalhes.php` via `curl_cffi` + `BeautifulSoup`. O `curl_cffi` impersona o TLS do Chrome, contornando a proteção Cloudflare que bloqueia bibliotecas HTTP convencionais (`requests`, `httpx`) quando executadas em IPs de datacenter — como GitHub Codespaces, Google Cloud Run ou AWS. Retorna o conjunto completo de indicadores: cotação, valuation (P/L, P/VP, EV/EBITDA…), rentabilidade (ROE, ROIC, margens…), balanço patrimonial e demonstrativo de resultados.
+
+2. **Scraping do Investidor10 (fallback):** acionado se o Fundamentus falhar. Extrai os cards do topo (cotação, P/L, P/VP, DY), indicadores fundamentalistas com comparativos por setor/subsetor, histórico de dividendos e informações cadastrais da empresa. Também usa `curl_cffi` para contornar eventuais bloqueios.
+
+3. **GPT-4o com web search (último recurso):** acionado se ambos os scrapings falharem e `OPENAI_API_KEY` estiver configurada. Usa a Responses API da OpenAI com `web_search_preview` para buscar os mesmos indicadores em B3, Fundamentus, Status Invest e Yahoo Finance, com limite de tokens para controle de custo.
+
+### Análise em três modelos
+
+A etapa de análise executa um pipeline de três modelos em sequência:
+
+1. **Claude Sonnet** e **GPT-4o** recebem o mesmo prompt de análise de forma independente, cada um produzindo: resumo do negócio, interpretação dos indicadores, seleção de indicadores para o dashboard, classificação de sentimento das notícias e perguntas investigativas.
+
+2. **Gemini 2.5 Flash** recebe as duas análises e as sintetiza — sem gerar dados novos. Sua única função é selecionar e combinar o melhor conteúdo já produzido: resume o negócio em exatamente 3 frases, divide a interpretação dos indicadores em 3 seções temáticas (Valuation, Rentabilidade, Endividamento), classifica o ativo como *atrativo*, *neutro* ou *cautela* com justificativa, copia o `indicadores_dashboard` do Claude sem alteração (pois vem de dados reais do scraping), seleciona o sentimento mais bem fundamentado para cada notícia e escolhe as 3 perguntas mais relevantes e distintas entre as 6 disponíveis.
+
+Se GPT-4o ou Claude Sonnet falharem, o pipeline degrada graciosamente seguindo a ordem de preferência para o enriquecimento: **Gemini 2.5 Flash** (síntese completa) → **Claude Haiku** (enriquecimento leve) → **GPT-4o-mini** (enriquecimento leve, acionado se Haiku falhar e `OPENAI_API_KEY` estiver disponível) → análise Claude no formato original (sem classificação nem sub-seções). O enriquecimento leve (Haiku ou GPT-mini) adiciona apenas a classificação semáforo e a divisão da interpretação em 3 seções temáticas, sem gerar dados novos.
+
+### Seleção de indicadores para o dashboard
+
+Claude e GPT-4o recebem o conjunto bruto completo de indicadores (incluindo DRE e balanço) e cada um seleciona entre 8 e 12 dos mais relevantes para value investing. O Gemini preserva a seleção do Claude no campo `indicadores_dashboard`, que é exibido diretamente no dashboard.
+
+### Dashboard
+
+O dashboard abre na tela de **Visão Geral**, exibindo a tabela resumida de todos os ativos com cotação e semáforo. Ao clicar em um ativo, a visualização detalha:
+
+- **Semáforo** (*atrativo* / *neutro* / *cautela*) com razão em uma frase, exibido no cabeçalho
+- **Interpretação em 3 seções**: Valuation, Rentabilidade e Endividamento
+- **Notícias** com badge de sentimento, fonte, data e justificativa de impacto
+- **Histórico**: tabela com as execuções anteriores do ativo (cotação, P/L, Div. Yield, classificação por data)
+
+Em dispositivos móveis, a barra lateral é ocultada e acessível via botão de menu.
+
+### Decisões técnicas
+
+**Por que HTML autocontido em vez de Streamlit?**
+O avaliador abre o arquivo no navegador sem instalar nada e sem rodar um servidor. O `main.py` injeta os dados diretamente no HTML como objeto JavaScript, eliminando problemas de CORS com `file://`. Separação clara entre backend (Python coleta e analisa) e frontend (HTML renderiza).
+
+**Por que RSS para notícias em vez de web scraping?**
+Google News RSS é gratuito, estável e não requer parsing de HTML frágil. Retorna título, link, data e fonte. A classificação de sentimento é feita pelo LLM na etapa de análise, não na coleta.
+
+**Por que três modelos diferentes (Claude, GPT-4o e Gemini)?**
+Cada modelo tem pontos fortes distintos na análise textual; usar dois modelos independentes para a análise e um terceiro para arbitrar e sintetizar reduz vieses individuais e tende a produzir textos mais equilibrados. O Gemini atua como editor — não como analista —, garantindo que nenhum dado seja fabricado fora dos dados de mercado coletados. O GPT-4o também serve como fallback de coleta de indicadores quando o scraping falha, aproveitando sua integração nativa com web search.
+
+**Por que SQLite em vez de apenas arquivos JSON?**
+O case exige versionamento temporal (dados de hoje não sobrescrevem os de ontem) e consulta a dados históricos no dashboard. O SQLite resolve ambos sem dependências externas: cada execução cria um snapshot por ticker na tabela `ativos_snapshot`, e queries com `JOIN` permitem recuperar o histórico de qualquer ativo nas últimas N execuções. O JSON em `data/output/` é mantido como backup legível por execução. O banco é criado automaticamente em `data/briefing.db` na primeira execução e está no `.gitignore`.
+
+**Por que `curl_cffi` em vez de `requests` para o scraping?**
+O Fundamentus é protegido por Cloudflare, que bloqueia requisições HTTP comuns vindas de IPs de datacenter com um desafio 403. O `curl_cffi` impersona o fingerprint TLS do Chrome, fazendo a requisição parecer um navegador real e contornando o bloqueio sem necessidade de Selenium ou Playwright.
+
+**Como o pipeline lida com respostas fora do formato esperado do LLM?**
+LLMs ocasionalmente retornam texto introdutório, blocos de código markdown (` ```json `) ou comentários após o JSON, mesmo quando instruídos a não fazê-lo. Em vez de depender de heurísticas frágeis como `startswith("```")`, o parser usa `re.search(r"\{.*\}", texto, re.DOTALL)` para extrair o bloco JSON mais externo da resposta completa, ignorando qualquer conteúdo antes ou depois das chaves. Se nenhum bloco for encontrado, a exceção é capturada e o ativo é marcado com `{"erro": ...}` sem interromper o pipeline dos demais.
+
+## Variáveis de Ambiente
+
+| Variável | Descrição | Obrigatória |
+|---|---|---|
+| `ANTHROPIC_API_KEY` | Chave de API da Anthropic (análise via Claude Sonnet + enriquecimento via Haiku) | Sim* |
+| `OPENAI_API_KEY` | Chave de API da OpenAI (análise via GPT-4o + enriquecimento via GPT-mini + fallback de coleta) | Sim* |
+| `GOOGLE_API_KEY` | Chave de API do Google (síntese via Gemini 2.5 Flash) | Não** |
+
+*Pelo menos uma das duas é obrigatória. Com apenas `ANTHROPIC_API_KEY`: análise via Claude Sonnet, enriquecimento via Haiku. Com apenas `OPENAI_API_KEY`: análise via GPT-4o, enriquecimento via GPT-mini. Com ambas: Claude e GPT-4o analisam em paralelo; se `GOOGLE_API_KEY` também estiver presente, Gemini sintetiza as duas análises.
+
+**Se `GOOGLE_API_KEY` não estiver configurada, a síntese Gemini é desativada e GPT-4o não é chamado para análise quando Claude estiver disponível.
+
+## Lista de Ativos
+
+Os tickers monitorados estão em `data/ativos.txt` no formato `TICKER|Nome da Empresa`. Para adicionar ou remover ativos, edite esse arquivo ou use a etapa interativa no terminal ao executar `main.py`.
+
+## Dependências
+
+Definidas em `requirements.txt`:
+
+- `anthropic` — SDK oficial da API Claude (análise fundamentalista)
+- `openai` — SDK oficial da API OpenAI (análise GPT-4o + fallback de coleta)
+- `google-genai` — SDK oficial do Google (síntese via Gemini 2.5 Flash)
+- `curl_cffi` — Requisições HTTP com impersonação de TLS do Chrome (contorna Cloudflare no Fundamentus)
+- `beautifulsoup4` — Parsing do HTML do Fundamentus
+- `feedparser` — Parsing de feeds RSS
+- `python-dotenv` — Carregamento de variáveis do `.env`
+
+## Licença
+
+Projeto desenvolvido exclusivamente para o processo seletivo Charles River 2026.1.
