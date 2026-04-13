@@ -7,10 +7,11 @@
 | 1 | **Isaias Goncalves** | **5/5** | 4.5 | 4.5 | 5 | 5 | 5 | 5 | Dashboard interativo + deploy ao vivo, testes, Docker, migracoes |
 | 2 | **Walleria Simoes** | **3.5/5** | 4.5 | 4 | 4 | 3.5 | 4 | 3 | Bancos vs empresas, prompt value investing, logging |
 | 3 | **Lucas Sodre** | **3.5/5** | 3 | 4 | 3.5 | 4.5 | 3.5 | 3.5 | Modos de pipeline, coleta paralela, pipeline_runs |
-| 4 | **Joao Felipe** | **3/5** | 5 | 4.5 | 4 | 1 | 3.5 | 2 | Melhor prompt de value investing, 5 fontes de dados |
-| 5 | **Felipe Schowantz** | **3/5** ¹ | 3.5 | 5 | 4 | 3.5 | 3.5 | 4.5 | Airflow+dbt+Docker, CVM DFs, PRs com gitflow, RAG chat |
-| 6 | **Diego Gadelha** | **2.5/5** ² | 4 | 3.5 | 3.5 | 3.5 | 4 | 3 | Prompt Buffett/Munger, logging, retry backoff, Groq gratuito |
-| 7 | **Alex Oliveira** | **2.5/5** ³ | 3.5 | 4 | 3 | 4 | 2.5 | 3.5 | Dois LLMs, MySQL+ORM, dois scrappers |
+| 4 | **Janys Guenn** | **3.5/5** | 3.5 | 4 | 3.5 | 3.5 | 3.5 | 2.5 | RAG com ChromaDB + reranking LLM (Fase 3), pipeline end-to-end funcional |
+| 5 | **Joao Felipe** | **3/5** | 5 | 4.5 | 4 | 1 | 3.5 | 2 | Melhor prompt de value investing, 5 fontes de dados |
+| 6 | **Felipe Schowantz** | **3/5** ¹ | 3.5 | 5 | 4 | 3.5 | 3.5 | 4.5 | Airflow+dbt+Docker, CVM DFs, PRs com gitflow, RAG chat |
+| 7 | **Diego Gadelha** | **2.5/5** ² | 4 | 3.5 | 3.5 | 3.5 | 4 | 3 | Prompt Buffett/Munger, logging, retry backoff, Groq gratuito |
+| 8 | **Alex Oliveira** | **2.5/5** ³ | 3.5 | 4 | 3 | 4 | 2.5 | 3.5 | Dois LLMs, MySQL+ORM, dois scrappers |
 
 *¹ Felipe revisado de 3.5/5 para 3/5: extracao funciona (BCB 366 rows, CVM 3576 rows, yfinance OK), mas dbt falha em 13/17 modelos — camada de transformacao quebrada.*
 *² Diego revisado de 3.5/5 para 2.5/5: dois bugs criticos — import order impede carregamento da GROQ_API_KEY, salvar_snapshot_no_db() com corpo `pass` impede persistencia.*
@@ -107,6 +108,10 @@
 | Walleria Simoes | Duplicatas em `market_data` (sem UNIQUE constraint em ticker+date) | MEDIO | Sim (01/abr) |
 | Lucas Sodre | Instrucoes de setup exclusivas para Linux sem aviso (funciona em Windows) | BAIXO | Sim (01/abr) |
 | Lucas Sodre | `venv/`, `__pycache__` no repo; bare `except:` em yahoo_raw | MEDIO | Confirmado |
+| Janys Guenn | `.env` com API key Groq commitada no repo (apesar de .gitignore listar .env) | ALTO | Sim (13/abr) |
+| Janys Guenn | `hipotese_capital.db`, `__pycache__`, `banco_vetorial_simples/` commitados | MEDIO | Sim (13/abr) |
+| Janys Guenn | Historico perde indicadores: so salva cotacao e P/L, nao ROE/DY/Margem/Divida | MEDIO | Sim (13/abr) |
+| Janys Guenn | Dois `requirements.txt` (`requirements.txt` e `requirements (1).txt`) — confuso | BAIXO | Sim (13/abr) |
 | Isaias Goncalves | Path de migracao relativo ao CWD — falha se executado de dentro de `src/` | BAIXO | Sim (01/abr) |
 | Isaias Goncalves | GEMINI.md revela uso de IA como assistente de codigo | INFO | Confirmado |
 | Isaias Goncalves | `verify=False` no curl_cffi (risco de seguranca) | BAIXO | Confirmado |
@@ -120,6 +125,7 @@ Avaliacoes individuais detalhadas na pasta `avaliacoes/` desta branch:
 - [avaliacoes/isaias-goncalves.md](avaliacoes/isaias-goncalves.md) - Nota 5/5 *(confirmado em execucao)*
 - [avaliacoes/walleria-simoes.md](avaliacoes/walleria-simoes.md) - Nota 3.5/5 *(confirmado em execucao)*
 - [avaliacoes/lucas-sodre.md](avaliacoes/lucas-sodre.md) - Nota 3.5/5 *(confirmado em execucao)*
+- [avaliacoes/janys-guenn.md](avaliacoes/janys-guenn.md) - Nota 3.5/5 *(pipeline funcional + RAG Fase 3)*
 - [avaliacoes/joao-felipe.md](avaliacoes/joao-felipe.md) - Nota 3/5 *(confirmado em execucao)*
 - [avaliacoes/felipe-schowantz.md](avaliacoes/felipe-schowantz.md) - Nota 3/5 *(revisado de 3.5/5 — dbt quebrado)*
 - [avaliacoes/diego-gadelha.md](avaliacoes/diego-gadelha.md) - Nota 2.5/5 *(revisado de 3.5/5 — 2 bugs criticos)*
